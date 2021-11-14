@@ -45,7 +45,8 @@ def applyRules(character):
   #newstr = ''
     
     if character == 'F':
-      newstr = 'FF'
+      #newstr = 'FF'
+        newstr = 'F[+F]F[-F]F'
     elif character == 'X':
       rand = randint(0,1)
       if rand == 0:
@@ -68,8 +69,9 @@ def createSystem(iters, axiom):
 def drawLsystem(t, word, angle, distance):
   stack = []
   heading = t.heading()
- 
+    
   for character in word:
+    print(stack)
     #print(character)
     t.pd()
     if character == 'F':
@@ -105,11 +107,11 @@ def drawLsystem(t, word, angle, distance):
       
 def main():
   
-  word = createSystem(5, 'X')
+  word = createSystem(3, 'F')
   print(word)
   
-  angle = 22.5
-  distance = 7
+  angle = 25.7
+  distance = 15
   turtle.hideturtle()
   t = turtle
   wn = turtle.Screen()
