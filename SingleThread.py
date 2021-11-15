@@ -9,8 +9,9 @@ import mathutils
 from multiprocessing import Process, Manager
 import os
 from random import randint
-from multiprocessing import Process, Pipe
-import concurrent.futures
+CONSTANTS = ['+','-','/','\\','&','∧','|','!','[',']']
+VARIABLES = ['A','B','C','D']
+
 def processString(word):
   newstr = ''
   for character in word:
@@ -34,23 +35,22 @@ def applyRules(character):
     #return newstr
     newstr = ''
     #if character == 'F':
-    #    newstr = 'S/////F'
+    #    newstr = 'S ///// F'
     #elif character == 'A':
     #    newstr = '[&FL!A]/////’[&FL!A]///////’[&FL!A]'
     #elif character == 'S':
-    #    newstr = 'FL'
+    #    newstr = 'F L'
     #else:
     #    newstr = character
     
     if character == 'F':
       newstr = 'FF'
-      #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
       rand = randint(0,1)
       if rand == 0:
-        newstr = 'F-[[XL]+X]+F[+FXL]-XL'
+        newstr = 'F-[[X]+X]+FL[+FLX]-X'
       elif rand == 1:
-        newstr = 'F+[[XL]-X]-F[-FXL]+XL'
+        newstr = 'F+[[X]-X]-FL[-FLX]+X'
     else:
       newstr = character
     return newstr
@@ -64,9 +64,9 @@ def replacer(word):
              c = rotators[randint(0, 3)]
              newstr += c
         else:
-            #print(word[i])
+            print(word[i])
             newstr += word[i]
-    #print(newstr)
+    print(newstr)
     return newstr
 def createSystem(iters, axiom):
   startString = axiom
@@ -77,77 +77,49 @@ def createSystem(iters, axiom):
     startString = endString
   return endString
 
-def createEdges(word, angle, distance, stack, newBm):
-    
-    
-    max = len(word)
-    index = 0
-    
-    """ Implement diamaeter change"""
+def createTree(word, angle, distance):
+    # Convert angle to radians
+    angle = math.radians(angle)
+    # Set current diameter
     diameter = 0.4
+    # Set previous diameter
     prevDiameter = 0.4
-    """ Remove this Later"""
-    inStack = False
-    
-    if stack == None: 
-        # Make a new BMesh
-        bm = bmesh.new()
-        # Convert angle to radians
-        angle = math.radians(angle)
-        """
-        # Set current diameter
-        diameter = 0.4
-        # Set previous diameter
-        prevDiameter = 0.4
-        """
-        # Set center point location
-        center = [0,0,0]
-        """
-        # Create stack for push action
-        stack = []
-        """
-        # Set current heading
-        heading = mathutils.Vector([0,0,distance])
-        # Set scale vector for top edge of the cell
-        scaleVec = [0,0,0]
-        # Set rotation matrix
-        rotationMat = mathutils.Matrix()
-        #leafRot = mathutils.Matrix()
-        leafRot = mathutils.Euler((0,0,0), 'XYZ')
-        """
-        # is in stack
-        inStack = False
-        """
-        
-        # Create a new Circle for the Axiom
-        tmpCircle = bmesh.ops.create_circle(
+    # Set center point location
+    center = [0,0,0]
+    # Create stack for push action
+    stack = ()
+    # Set current heading
+    heading = mathutils.Vector([0,0,distance])
+    # Set scale vector for top edge of the cell
+    scaleVec = [0,0,0]
+    # Set rotation matrix
+    rotationMat = mathutils.Matrix()
+    #leafRot = mathutils.Matrix()
+    leafRot = mathutils.Euler((0,0,0), 'XYZ')
+    firstRot = True
+    # Make a new BMesh
+    bm = bmesh.new()
+    tmpCircle = bmesh.ops.create_circle(
                             bm,
                             cap_ends=False,
                             radius= diameter / 2,
                             segments=8)
-        # Select current edges 
-        markedEdges = [e for e in bm.edges]
     
-    else:
-        bm = newBm    
-        markedEdges = stack['edges']
-        heading = mathutils.Vector(stack['heading'])
-        center = stack['center']
-        """
-        inStack = stack['inStack']
-        """
-    
-    
-    
-    
-    
+    # Select current edges 
+    markedEdges = [e for e in bm.edges]
 
-    # Loop through the L-System word
-    while index < len(word):
-        print(word[index])
+    # is in stack
+    inStack = False
+    
+    max = len(word)
+    index = 0
+    # Loop throught the L-System word
+    for char in word:
+        print(str(index) + '/' + str(max))
+        index += 1
         #print(leafRot)
         # Move forward and create a mesh cell
-        if word[index] == 'F':   
+        if char == 'F':   
             # Extrude the marked edges
             extruded = bmesh.ops.extrude_edge_only(bm, edges=markedEdges)
             
@@ -175,7 +147,7 @@ def createEdges(word, angle, distance, stack, newBm):
 
             
         # Turn left
-        elif word[index] == '+':
+        elif char == '+':
             #rotationMat = [[math.cos(angle), -math.sin(angle), 0],
             #                [math.sin(angle), math.cos(angle), 0],
             #                [0, 0, 1]]
@@ -191,7 +163,7 @@ def createEdges(word, angle, distance, stack, newBm):
             
           
         # Turn right
-        elif word[index] == '-':
+        elif char == '-':
             #rotationMat = [[-math.cos(angle), math.sin(angle), 0],
             #                [-math.sin(angle), -math.cos(angle), 0],
             #                [0, 0, 1]]
@@ -204,33 +176,33 @@ def createEdges(word, angle, distance, stack, newBm):
             markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
         # Pitch down
-        elif word[index] == '&':
+        elif char == '&':
            
             
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'Y')
             
             #leafRot = leafRot @ rotationMat
-            #leafRot.rotate_axis('Z', -angle)
+            leafRot.rotate_axis('Z', -angle)
             # Duplicate and rotate selected edges
             tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
             # Update selected edges and their center
             markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
         # pitch up
-        elif word[index] == '^':
+        elif char == '^':
             #rotationMat = [[-math.cos(angle), 0, -math.sin(angle)],
             #                [0, 1, 0],
             #                [math.sin(angle), 0, -math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'Y')
             
-            #leafRot.rotate_axis('Z', angle)
+            leafRot.rotate_axis('Z', angle)
             # Duplicate and rotate selected edges
             tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
             # Update selected edges and their center
             markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
                 
         # Roll left (\)
-        elif word[index] == '\\':
+        elif char == '\\':
             #rotationMat = [[1, 0, 0],
             #                [0, math.cos(angle), math.sin(angle)],
             #                [0, -math.sin(angle), math.cos(angle)]]
@@ -243,14 +215,14 @@ def createEdges(word, angle, distance, stack, newBm):
             markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
         # Roll right
-        elif word[index] == '/':
+        elif char == '/':
             #rotationMat = [[1, 0, 0],
             #                [0, -math.cos(angle), -math.sin(angle)],
             #                [0, math.sin(angle), -math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'X')
             
             #leafRot = leafRot @ rotationMat
-            #leafRot.rotate_axis('X', -angle)
+            leafRot.rotate_axis('X', -angle)
             # Duplicate and rotate selected edges
             tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
             # Update selected edges and their center
@@ -258,7 +230,7 @@ def createEdges(word, angle, distance, stack, newBm):
             
                 
         # Turn around (angle: 180)
-        elif word[index] == '|':
+        elif char == '|':
             #rotationMat = [[math.cos(math.radians(180)), -math.sin(math.radians(180)), 0],
             #                [math.sin(math.radians(180)), math.cos(math.radians(180)), 0],
             #                [0, 0, 1]]
@@ -269,7 +241,7 @@ def createEdges(word, angle, distance, stack, newBm):
             markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
         # Create leaf
-        elif word[index] == 'L':
+        elif char == 'L':
             
             matLoc = mathutils.Matrix.Translation(center)
             #print('track')
@@ -287,68 +259,22 @@ def createEdges(word, angle, distance, stack, newBm):
             #leafRot = mathutils.Matrix()
        
         # increment the diameter
-        elif word[index] == '!':
+        elif char == '!':
             prevDiameter = diameter
             diameter /= 1.1
         # Push
-        elif word[index] == '[': 
-            #stack.append((markedEdges, (heading.x, heading.y, heading.z), center, [word[i] for i in range(index + 1, word.find(']', index))]))
-            #manager = Manager()
-            #return_bm = Manager().dict()
-            
-            
-            tmpWord = ''
-            for i in range (index + 1, word.find(']', index)):
-                tmpWord += word[i]
-            #tmpBm = bm.copy()
-            tmpEdges = bmesh.ops.duplicate(bm, geom = markedEdges)
-            tmpEdges = [e for e in tmpEdges['geom'] if isinstance(e, BMEdge)]
-            #print(len(tmpBm.edges))
-            #for e in tmpBm.edges:
-            #    if e in markedEdges:
-            #        bmesh.ops.delete(bm, geom=[e], context='EDGES')
-            #print(len(tmpBm.edges))
-            #newEdges = [e for e in tmpBm.edges]
-            stack = {'edges':tmpEdges, 'heading':(heading.x, heading.y, heading.z), 'center': center}
-            
-            #print(tmpWord)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(createEdges, tmpWord, angle, distance, stack, bm)
-                print(future.result())
-                #tmpBm = future.result()
-                #tmpMesh = bpy.data.meshes.new('.tmp')
-                #tmpBm.to_mesh(tmpMesh)
-                #tmpBm.free()
-                #bm.from_mesh(tmpMesh)
-                #bpy.data.meshes.remove(tmpMesh)
-                
-            index =  word.find(']', index)
-            #inStack = True
-            
+        elif char == '[': 
+            stack = (markedEdges, (heading.x, heading.y, heading.z), center)
+            inStack = True
         # Pop
-        elif word[index] == ']':
-            #markedEdges, tmpheading, center = stack.pop()
-            #heading = mathutils.Vector(tmpheading)
-            #markedEdges = stack[0]
-            #heading = mathutils.Vector(stack[1])
-            #center = stack[2]
-            #inStack = False
-            pass
-        print(str(index) + '/' + str(max))
-        #print(len(stack))
-        index += 1
-    return bm  
-    #convertToObject(bm)
-def createNodes(angle, distance, stack):
-    bm = bmesh.new()
-    tmpCircle = bmesh.ops.create_circle(
-                            bm,
-                            cap_ends=False,
-                            radius= diameter / 2,
-                            segments=8)
-    return 45
-def convertToObject(bm):
-     # Finish up, write the bmesh into a new mesh
+        elif char == ']':
+            markedEdges = stack[0]
+            heading = mathutils.Vector(stack[1])
+            center = stack[2]
+            inStack = False
+        
+        
+    # Finish up, write the bmesh into a new mesh
     me = bpy.data.meshes.new("Mesh")
     # Create a mesh from bmesh
     bm.to_mesh(me)
@@ -363,11 +289,10 @@ def convertToObject(bm):
     # Select and make active
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
-    
+
 def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inStack):
     scaleVec = [diameter / prevDiameter for i in range(0,3)]
     
-    """
     if inStack:
         #Duplicate selected edges
         dupli = bmesh.ops.duplicate(bm, geom = selEdges)
@@ -376,9 +301,7 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
     
     else:
         markedEdges = selEdges
-    """    
-    markedEdges = selEdges
-    
+
     # Get raw vertices
     rawVerts = [v.co for v in list(set([v for e in markedEdges for v in e.verts]))]
     if not len(rawVerts):
@@ -393,24 +316,21 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
   
     # Update heading vector
     heading.rotate(rotationMat)
-    """
+
     if inStack:
         inStack = False
         return markedEdges, center, heading, inStack
 
     else:
         return selEdges, center, heading, inStack
-    """
-    return markedEdges, center, heading, inStack
 
 def main():
-    word = createSystem(7, 'X')
-    #print(word)
+    word = createSystem(5, 'X')
     word = replacer(word)
     angle = 22.5
     distance = 0.5
-    #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
-    bm = createEdges('F[/FF]', angle, distance, None, None)
-    convertToObject(bm)
+    #FFFFFFFFFFFFFFFF+[[FFFFFFFF+[[FFFF+[[FF-[[F+[[X]-X]-F[-FX]+X]+F-
+    createTree(word, angle, distance)
+    
 if __name__ == "__main__":
     main()
