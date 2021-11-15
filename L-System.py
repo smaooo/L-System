@@ -22,7 +22,7 @@ from multiprocessing import Process, Manager
 import os
 from random import randint
 import multiprocessing
-from multiprocessing import Process
+from multiprocessing import Process, Pool
 import concurrent.futures
 import time, os, sys
 def processString(word):

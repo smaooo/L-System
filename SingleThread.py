@@ -48,11 +48,13 @@ def applyRules(character):
       newstr = 'FF'
       #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
-      rand = randint(0,1)
-      if rand == 0:
-        newstr = 'F-[[X]+X]+F[+FX]-X'
-      elif rand == 1:
-        newstr = 'F+[[X]-X]-F[-FX]+X'
+        rand = randint(0,2)
+        if rand == 0:
+            newstr = 'F-[[X]+X]+F[+FX]-X'
+        elif rand == 1:
+            newstr = 'F+[[X]-X]-F[-FX]+X'
+        elif rand == 2:
+            newstr = 'F[+X]F[-X]+X'
     else:
       newstr = character
     return newstr
@@ -328,7 +330,7 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
 
 def main():
     startTime = time.time()
-    word = createSystem(2, 'X')
+    word = createSystem(7, 'X')
     word = replacer(word)
     angle = 22.5
     distance = 0.5
