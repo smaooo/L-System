@@ -1,3 +1,15 @@
+"""
+import sys
+# are we running inside Blender?
+bpy = sys.modules.get("bpy")
+if bpy is not None:
+    sys.executable = bpy.app.binary_path_python
+    # get the text-block's filepath
+   
+    __file__ = bpy.data.texts["L-System.py"].filepath
+del bpy, sys
+"""
+
 # This script uses bmesh operators to make 2 links of a chain.
 
 import bpy
@@ -9,8 +21,10 @@ import mathutils
 from multiprocessing import Process, Manager
 import os
 from random import randint
-from multiprocessing import Process, Pipe
+import multiprocessing
+from multiprocessing import Process
 import concurrent.futures
+import time, os, sys
 def processString(word):
   newstr = ''
   for character in word:
@@ -48,9 +62,9 @@ def applyRules(character):
     elif character == 'X':
       rand = randint(0,1)
       if rand == 0:
-        newstr = 'F-[[XL]+X]+F[+FXL]-XL'
+        newstr = 'F-[[X]+X]+F[+FX]-X'
       elif rand == 1:
-        newstr = 'F+[[XL]-X]-F[-FXL]+XL'
+        newstr = 'F+[[X]-X]-F[-FX]+X'
     else:
       newstr = character
     return newstr
@@ -144,7 +158,7 @@ def createEdges(word, angle, distance, stack, newBm):
 
     # Loop through the L-System word
     while index < len(word):
-        print(word[index])
+        #print(word[index])
         #print(leafRot)
         # Move forward and create a mesh cell
         if word[index] == 'F':   
@@ -236,7 +250,7 @@ def createEdges(word, angle, distance, stack, newBm):
             #                [0, -math.sin(angle), math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'X')
             
-            leafRot.rotate_axis('X', angle)
+            #leafRot.rotate_axis('X', angle)
             # Duplicate and rotate selected edges
             tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
             # Update selected edges and their center
@@ -310,11 +324,19 @@ def createEdges(word, angle, distance, stack, newBm):
             #print(len(tmpBm.edges))
             #newEdges = [e for e in tmpBm.edges]
             stack = {'edges':tmpEdges, 'heading':(heading.x, heading.y, heading.z), 'center': center}
-            
+            #context = multiprocessing.get_context('forkserver')
+            #context.set_forkserver_preload(['inherited'])
+            process = Process(target = createEdges, args=(tmpWord, angle, distance, stack, bm,))
+            process.start()
             #print(tmpWord)
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(createEdges, tmpWord, angle, distance, stack, bm)
-                print(future.result())
+            #with concurrent.futures.ThreadPoolExecutor() as executor:
+                
+            #    future = executor.submit(createEdges, tmpWord, angle, distance, stack, bm)
+            #t = threading.Thread(target = createEdges, args=(tmpWord, angle, distance, stack, bm,))
+            #t.start()    
+                #result = future.result()
+            
+                #print(future.result())
                 #tmpBm = future.result()
                 #tmpMesh = bpy.data.meshes.new('.tmp')
                 #tmpBm.to_mesh(tmpMesh)
@@ -334,7 +356,7 @@ def createEdges(word, angle, distance, stack, newBm):
             #center = stack[2]
             #inStack = False
             pass
-        print(str(index) + '/' + str(max))
+        #print(str(index) + '/' + str(max - 1))
         #print(len(stack))
         index += 1
     return bm  
@@ -403,14 +425,23 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
     """
     return markedEdges, center, heading, inStack
 
+
 def main():
-    word = createSystem(7, 'X')
+    startTime = time.time()
+    word = createSystem(1, 'X')
     #print(word)
     word = replacer(word)
+    #print(word)
     angle = 22.5
     distance = 0.5
     #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
-    bm = createEdges('F[/FF]', angle, distance, None, None)
+    #'FF[/F][&F][^F][\F]FF'
+    bm = createEdges('F[/F]', angle, distance, None, None)
     convertToObject(bm)
+    duration = time.time() - startTime
+    print(duration)
 if __name__ == "__main__":
+    #multiprocessing.set_executable(os.path.dirname(bpy.data.filepath))
+    #print(sys.executable)
     main()
+    

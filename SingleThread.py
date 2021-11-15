@@ -9,6 +9,7 @@ import mathutils
 from multiprocessing import Process, Manager
 import os
 from random import randint
+import time
 CONSTANTS = ['+','-','/','\\','&','∧','|','!','[',']']
 VARIABLES = ['A','B','C','D']
 
@@ -45,12 +46,13 @@ def applyRules(character):
     
     if character == 'F':
       newstr = 'FF'
+      #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
       rand = randint(0,1)
       if rand == 0:
-        newstr = 'F-[[X]+X]+FL[+FLX]-X'
+        newstr = 'F-[[X]+X]+F[+FX]-X'
       elif rand == 1:
-        newstr = 'F+[[X]-X]-FL[-FLX]+X'
+        newstr = 'F+[[X]-X]-F[-FX]+X'
     else:
       newstr = character
     return newstr
@@ -64,9 +66,9 @@ def replacer(word):
              c = rotators[randint(0, 3)]
              newstr += c
         else:
-            print(word[i])
+            #print(word[i])
             newstr += word[i]
-    print(newstr)
+    #print(newstr)
     return newstr
 def createSystem(iters, axiom):
   startString = axiom
@@ -115,7 +117,7 @@ def createTree(word, angle, distance):
     index = 0
     # Loop throught the L-System word
     for char in word:
-        print(str(index) + '/' + str(max))
+        #print(str(index) + '/' + str(max))
         index += 1
         #print(leafRot)
         # Move forward and create a mesh cell
@@ -325,12 +327,14 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
         return selEdges, center, heading, inStack
 
 def main():
-    word = createSystem(5, 'X')
+    startTime = time.time()
+    word = createSystem(2, 'X')
     word = replacer(word)
     angle = 22.5
     distance = 0.5
     #FFFFFFFFFFFFFFFF+[[FFFFFFFF+[[FFFF+[[FF-[[F+[[X]-X]-F[-FX]+X]+F-
     createTree(word, angle, distance)
-    
+    duration = time.time() - startTime
+    print(duration)
 if __name__ == "__main__":
     main()
