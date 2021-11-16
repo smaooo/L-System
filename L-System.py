@@ -22,9 +22,12 @@ from multiprocessing import Process, Manager
 import os
 from random import randint
 import multiprocessing
-from multiprocessing import Process, Pool
+from multiprocessing import Process, Pool, Pipe
 import concurrent.futures
-import time, os, sys
+import time, os, sys, pickle
+from functools import partial
+import pickle
+sender, receiver = Pipe()
 def processString(word):
   newstr = ''
   for character in word:
@@ -93,7 +96,7 @@ def createSystem(iters, axiom):
 
 def createEdges(word, angle, distance, stack, newBm):
     
-    
+    print(receiver.poll())
     max = len(word)
     index = 0
     
@@ -326,8 +329,22 @@ def createEdges(word, angle, distance, stack, newBm):
             stack = {'edges':tmpEdges, 'heading':(heading.x, heading.y, heading.z), 'center': center}
             #context = multiprocessing.get_context('forkserver')
             #context.set_forkserver_preload(['inherited'])
-            process = Process(target = createEdges, args=(tmpWord, angle, distance, stack, bm,))
+#            process = Process(target = createEdges, args=(tmpWord, angle, distance, stack, bm,))
+            process = Process(target=testFunc)
+            #with Pool() as pool:
+            #    pool.map(testFunc, 
             process.start()
+            print(process.pid)
+            #process.start()
+            
+            #sender.send(markedEdges)
+#            print(pickle.dumps(markedEdges[0]))
+            #bpy.data.texts['pickle'].write(markedEdges)
+#            bmesh.ops.delete(bm, geom=[str(markedEdges)])
+            #func = partial(createEdges, args = (tmpWord, angle, distance, stack, bm,))
+            #with Pool() as pool:
+            #    pool.map(func, [1])
+
             #print(tmpWord)
             #with concurrent.futures.ThreadPoolExecutor() as executor:
                 
@@ -361,6 +378,8 @@ def createEdges(word, angle, distance, stack, newBm):
         index += 1
     return bm  
     #convertToObject(bm)
+def testFunc():
+    pass
 def createNodes(angle, distance, stack):
     bm = bmesh.new()
     tmpCircle = bmesh.ops.create_circle(
@@ -441,7 +460,7 @@ def main():
     duration = time.time() - startTime
     print(duration)
 if __name__ == "__main__":
-    #multiprocessing.set_executable(os.path.dirname(bpy.data.filepath))
+    multiprocessing.set_executable(os.path.dirname(bpy.data.filepath))
     #print(sys.executable)
     main()
     
