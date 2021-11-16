@@ -35,22 +35,24 @@ def applyRules(character):
     #return newstr
     newstr = ''
     #if character == 'F':
-    #    newstr = 'S ///// F'
+    #    newstr = 'S/////F'
     #elif character == 'A':
     #    newstr = '[&FL!A]/////’[&FL!A]///////’[&FL!A]'
     #elif character == 'S':
-    #    newstr = 'F L'
+    #    newstr = 'FL'
     #else:
-    #    newstr = character
+    newstr = character
     
     if character == 'F':
-      newstr = 'FF'
+        newstr = 'FF'
+      #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
-      rand = randint(0,1)
-      if rand == 0:
-        newstr = 'F-[[X]+X]+FL[+FLX]-X'
-      elif rand == 1:
-        newstr = 'F+[[X]-X]-FL[-FLX]+X'
+        #rand = randint(0,1)
+        #if rand == 0:
+        #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
+        #elif rand == 1:
+        #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
+        newstr = 'F[+XL][-XL]FX'
     else:
       newstr = character
     return newstr
@@ -64,9 +66,9 @@ def replacer(word):
              c = rotators[randint(0, 3)]
              newstr += c
         else:
-            print(word[i])
+            #print(word[i])
             newstr += word[i]
-    print(newstr)
+#   print(newstr)
     return newstr
 def createSystem(iters, axiom):
   startString = axiom
@@ -87,7 +89,7 @@ def createTree(word, angle, distance):
     # Set center point location
     center = [0,0,0]
     # Create stack for push action
-    stack = ()
+    stack = []
     # Set current heading
     heading = mathutils.Vector([0,0,distance])
     # Set scale vector for top edge of the cell
@@ -116,6 +118,7 @@ def createTree(word, angle, distance):
     # Loop throught the L-System word
     for char in word:
         print(str(index) + '/' + str(max))
+        #print(len(stack))
         index += 1
         #print(leafRot)
         # Move forward and create a mesh cell
@@ -264,13 +267,15 @@ def createTree(word, angle, distance):
             diameter /= 1.1
         # Push
         elif char == '[': 
-            stack = (markedEdges, (heading.x, heading.y, heading.z), center)
+            stack.append((markedEdges, (heading.x, heading.y, heading.z), center))
             inStack = True
         # Pop
         elif char == ']':
-            markedEdges = stack[0]
-            heading = mathutils.Vector(stack[1])
-            center = stack[2]
+            markedEdges, tmpheading, center = stack.pop()
+            heading = mathutils.Vector(tmpheading)
+            #markedEdges = stack[0]
+            #heading = mathutils.Vector(stack[1])
+            #center = stack[2]
             inStack = False
         
         
@@ -325,11 +330,12 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
         return selEdges, center, heading, inStack
 
 def main():
-    word = createSystem(5, 'X')
+    word = createSystem(7, 'X')
+    #print(word)
     word = replacer(word)
-    angle = 22.5
+    angle = 25.7
     distance = 0.5
-    #FFFFFFFFFFFFFFFF+[[FFFFFFFF+[[FFFF+[[FF-[[F+[[X]-X]-F[-FX]+X]+F-
+    #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
     createTree(word, angle, distance)
     
 if __name__ == "__main__":
