@@ -26,7 +26,7 @@ from multiprocessing import Process, Pool, Pipe
 import concurrent.futures
 import time, os, sys, pickle
 from functools import partial
-import pickle
+
 sender, receiver = Pipe()
 def processString(word):
   newstr = ''
@@ -330,11 +330,10 @@ def createEdges(word, angle, distance, stack, newBm):
             #context = multiprocessing.get_context('forkserver')
             #context.set_forkserver_preload(['inherited'])
 #            process = Process(target = createEdges, args=(tmpWord, angle, distance, stack, bm,))
-            process = Process(target=testFunc)
-            #with Pool() as pool:
-            #    pool.map(testFunc, 
-            process.start()
-            print(process.pid)
+            #process = Process(target=testFunc)
+            
+            #process.start()
+            #print(process.pid)
             #process.start()
             
             #sender.send(markedEdges)
@@ -459,8 +458,11 @@ def main():
     convertToObject(bm)
     duration = time.time() - startTime
     print(duration)
+    
+    
+    
 if __name__ == "__main__":
-    multiprocessing.set_executable(os.path.dirname(bpy.data.filepath))
+    #multiprocessing.set_executable(os.path.dirname(bpy.data.filepath))
     #print(sys.executable)
     main()
     
