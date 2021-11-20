@@ -45,12 +45,12 @@ def applyRules(character):
         newstr = 'FF'
       #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
-        #rand = randint(0,1)
-        #if rand == 0:
-        #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
-        #elif rand == 1:
-        #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
-        newstr = 'F[+X][-X]FX'
+        rand = randint(0,1)
+        if rand == 0:
+            newstr = 'F-[[X]+X]+F[+FX]-X'
+        elif rand == 1:
+            newstr = 'F+[[X]-X]-F[-FX]+X'
+        #newstr = 'F[+X][-X]FX'
     else:
       newstr = character
     
@@ -68,11 +68,15 @@ def replacer(word):
     newstr = ''
     
     for i in range(0, len(word)):
-        if word[i] == '+' or word[i] ==  '-':
-             c = rotators[randint(0, 3)]
-             newstr += c
+        rand = randint(0,2)
+        if rand == 1 or rand == 2:
+            if word[i] == '+' or word[i] ==  '-':
+                 c = rotators[randint(0, 3)]
+                 newstr += c
+            else:
+                #print(word[i])
+                newstr += word[i]
         else:
-            #print(word[i])
             newstr += word[i]
 #   print(newstr)
     return newstr
@@ -293,10 +297,10 @@ def main():
     word = createSystem(7, 'X')
     word = wordCleaner(word)
     word = replacer(word)
-
+    print(word)
     
    
-    angle = 25.7
+    angle = 22.5
     distance = 0.5
     #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
     createTree(word, angle, distance)
