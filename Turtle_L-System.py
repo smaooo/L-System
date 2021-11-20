@@ -1,6 +1,7 @@
 import turtle
 import keyboard
 from random import randint
+
 def processString(word):
   newstr = ''
   for character in word:
@@ -44,19 +45,33 @@ def applyRules(character):
 
   #newstr = ''
     
-    if character == 'F':
+    #if character == 'F':
       #newstr = 'FF'
-        newstr = 'F[+F]F[-F]F'
+    #    newstr = 'F[+F]F[-F]F'
+    #elif character == 'X':
+    #  rand = randint(0,1)
+    #  if rand == 0:
+    #    newstr = 'F-[[X]+X]+F[+FX]-X'
+    #  elif rand == 1:
+    #    newstr = 'F+[[X]-X]-F[-FX]+X'
+    #else:
+    #  newstr = character
+    #return newstr
+  
+      
+    if character == 'F':
+        newstr = 'FF'
+      #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
-      rand = randint(0,1)
-      if rand == 0:
-        newstr = 'F-[[X]+X]+F[+FX]-X'
-      elif rand == 1:
-        newstr = 'F+[[X]-X]-F[-FX]+X'
+        #rand = randint(0,1)
+        #if rand == 0:
+        #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
+        #elif rand == 1:
+        #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
+        newstr = 'F[+XL][-XL]FX'
     else:
       newstr = character
     return newstr
-  
 def createSystem(iters, axiom):
   startString = axiom
   endString = ''
@@ -107,11 +122,11 @@ def drawLsystem(t, word, angle, distance):
       
 def main():
   
-  word = createSystem(3, 'F')
+  word = createSystem(7, 'X')
   print(word)
   
   angle = 25.7
-  distance = 15
+  distance = 5
   turtle.hideturtle()
   t = turtle
   wn = turtle.Screen()
@@ -126,7 +141,7 @@ def main():
   t.setheading(90)
   print(t.screensize())
   #t.down()
-  t.speed(0)
+  t.speed('fastest')
   #t.heading(0)
   drawLsystem(t, word, angle, distance)
   #while (True):

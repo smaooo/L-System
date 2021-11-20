@@ -331,12 +331,14 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
 
 def main():
     word = createSystem(7, 'X')
-    #print(word)
+
     word = replacer(word)
+    print(word)
+    print(word.count('F'))
     angle = 25.7
     distance = 0.5
     #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
-    createTree(word, angle, distance)
+    #createTree(word, angle, distance)
     
 if __name__ == "__main__":
     main()
