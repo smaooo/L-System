@@ -52,11 +52,18 @@ def applyRules(character):
         #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
         #elif rand == 1:
         #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
-        newstr = 'F[+XL][-XL]FX'
+        newstr = 'F[+X][-X]FX'
     else:
       newstr = character
     return newstr
-  
+
+def wordCleaner(word):
+    word = word.replace('X', '')
+    word = word.replace('[+]', '')
+    word = word.replace('[-]', '')
+    return word
+ 
+ 
 def replacer(word):
     rotators = ['/','\\','&','^']
     newstr = ''
@@ -331,14 +338,16 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
 
 def main():
     word = createSystem(7, 'X')
-
-    word = replacer(word)
+    print(len(word))
+    word = wordCleaner(word)
     print(word)
-    print(word.count('F'))
+    print(len(word))
+    word = replacer(word)
+    
     angle = 25.7
     distance = 0.5
     #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
-    #createTree(word, angle, distance)
+    createTree(word, angle, distance)
     
 if __name__ == "__main__":
     main()

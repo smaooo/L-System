@@ -9,8 +9,6 @@ import mathutils
 from multiprocessing import Process, Manager
 import os
 from random import randint
-CONSTANTS = ['+','-','/','\\','&','∧','|','!','[',']']
-VARIABLES = ['A','B','C','D']
 
 def processString(word):
   newstr = ''
@@ -55,8 +53,16 @@ def applyRules(character):
         newstr = 'F[+X][-X]FX'
     else:
       newstr = character
+    
     return newstr
-  
+ 
+ 
+def wordCleaner(word):
+    word = word.replace('X', '')
+    word = word.replace('[+]', '')
+    word = word.replace('[-]', '')
+    return word
+ 
 def replacer(word):
     rotators = ['/','\\','&','^']
     newstr = ''
@@ -285,10 +291,11 @@ def rotateEdges(bm, heading, rotationMat, vertex, inStack):
 
 def main():
     word = createSystem(7, 'X')
-
+    word = wordCleaner(word)
     word = replacer(word)
-    print(word)
-    print(word.count('F'))
+
+    
+   
     angle = 25.7
     distance = 0.5
     #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
