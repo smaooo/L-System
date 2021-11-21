@@ -253,7 +253,7 @@ def createTree(word, angle, distance):
             inStack = False
         
     # Remove doubles
-    #bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
+    bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
     # Finish up, write the bmesh into a new mesh
     me = bpy.data.meshes.new("Mesh")
     # Create a mesh from bmesh
@@ -269,13 +269,43 @@ def createTree(word, angle, distance):
     # Select and make active
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
-    #bpy.ops.object.convert(target='CURVE')
-    #bpy.context.object.data.bevel_depth = 0.05
-    #bpy.ops.object.editmode_toggle()
-    #bpy.ops.curve.select_all(action='DESELECT')
-    #bpy.ops.curve.de_select_first()
-    #bpy.context.object.data.splines[0].points.foreach_set('select', [0])
-    
+    # Add skin modifier
+    skin = obj.modifiers.new(name='Skin', type='SKIN')
+    # Go to edit mode
+    bpy.ops.object.editmode_toggle()
+    # Select all vertices
+    bpy.ops.mesh.select_all(action='SELECT')
+    # Scale down skin size
+    bpy.ops.transform.skin_resize(value=(0.261996, 0.261996, 0.261996), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
+    # Deselect all vertices
+    bpy.ops.mesh.select_all(action='DESELECT')
+    # Go to object  mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    # Select the first vertex (bottom one)
+    obj.data.vertices[0].select = True
+    # Go to edit mode
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    # Scle skin size proportionally
+    bpy.ops.transform.skin_resize(value=(5.95387, 5.95387, 5.95387), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
+    # Add Bevel modifier
+    bevel = obj.modifiers.new(name='Bevel', type='BEVEL')
+    # Set bevel effect on vertices
+    bevel.affect = 'VERTICES'
+    # Increase bevel segments
+    bevel.segments = 2
+    # Add subdivision surface modifier
+    subdivision = obj.modifiers.new(name='Subdivision', type='SUBSURF')
+    # Increse subdiviosn levels viewport
+    subdivision.levels = 2
+    # Add smooth corrective modifier
+    smoothcor = obj.modifiers.new(name='CorrectiveSmooth', type='CORRECTIVE_SMOOTH')
+    # Set smooth modifier to use only smooth
+    smoothcor.use_only_smooth = True
+    # Set smooth modifier to use pin boundaries
+    smoothcor.use_pin_boundary = True
+    # Go to object mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+   
 #    bpy.ops.curve.select_nth()
 def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     
