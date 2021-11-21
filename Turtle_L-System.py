@@ -141,7 +141,7 @@ def main():
   t.setheading(90)
   print(t.screensize())
   #t.down()
-  t.speed('fastest')
+  t.speed('fastest  ')
   #t.heading(0)
   drawLsystem(t, word, angle, distance)
   #while (True):

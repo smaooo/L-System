@@ -252,7 +252,8 @@ def createTree(word, angle, distance):
             #center = stack[2]
             inStack = False
         
-        
+    # Remove doubles
+    #bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
     # Finish up, write the bmesh into a new mesh
     me = bpy.data.meshes.new("Mesh")
     # Create a mesh from bmesh
@@ -268,7 +269,14 @@ def createTree(word, angle, distance):
     # Select and make active
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
-
+    #bpy.ops.object.convert(target='CURVE')
+    #bpy.context.object.data.bevel_depth = 0.05
+    #bpy.ops.object.editmode_toggle()
+    #bpy.ops.curve.select_all(action='DESELECT')
+    #bpy.ops.curve.de_select_first()
+    #bpy.context.object.data.splines[0].points.foreach_set('select', [0])
+    
+#    bpy.ops.curve.select_nth()
 def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     
     
@@ -294,7 +302,7 @@ def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     return vertex, center, heading, inStack
 
 def main():
-    word = createSystem(7, 'X')
+    word = createSystem(3, 'X')
     word = wordCleaner(word)
     word = replacer(word)
     print(word)
