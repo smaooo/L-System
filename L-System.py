@@ -337,7 +337,7 @@ def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inSt
         return selEdges, center, heading, inStack
 
 def main():
-    word = createSystem(7, 'X')
+    word = createSystem(3, 'X')
     print(len(word))
     word = wordCleaner(word)
     print(word)

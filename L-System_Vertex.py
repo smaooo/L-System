@@ -1,4 +1,4 @@
-# This script uses bmesh operators to make 2 links of a chain.
+ # This script uses bmesh operators to make 2 links of a chain.
 
 import bpy
 import bmesh
@@ -9,6 +9,9 @@ import mathutils
 from multiprocessing import Process, Manager
 import os
 from random import randint
+
+# L-System Settings
+ITERATIONS = 5
 
 def processString(word):
   newstr = ''
@@ -276,17 +279,29 @@ def createTree(word, angle, distance):
     # Select all vertices
     bpy.ops.mesh.select_all(action='SELECT')
     # Scale down skin size
-    bpy.ops.transform.skin_resize(value=(0.261996, 0.261996, 0.261996), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
+    #bpy.ops.transform.skin_resize(value=(1 - (2 / ITERATIONS), 1 - (2 / ITERATIONS), 1 - (2 / ITERATIONS)), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
+    
     # Deselect all vertices
     bpy.ops.mesh.select_all(action='DESELECT')
     # Go to object  mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    
+    
     # Select the first vertex (bottom one)
     obj.data.vertices[0].select = True
     # Go to edit mode
     bpy.ops.object.mode_set(mode = 'EDIT')
     # Scle skin size proportionally
-    bpy.ops.transform.skin_resize(value=(5.95387, 5.95387, 5.95387), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
+    bpy.ops.transform.skin_resize(value=( ITERATIONS, ITERATIONS, ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=5 * ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
+
+    # Go to object mode
+    
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    obj.data.vertices[0].select = False
+    obj.data.vertices[-1].select = True
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.transform.skin_resize(value=(0.09 * ITERATIONS, 0.09 * ITERATIONS, 0.09 * ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=5 *  ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
+    
     # Add Bevel modifier
     bevel = obj.modifiers.new(name='Bevel', type='BEVEL')
     # Set bevel effect on vertices
@@ -295,8 +310,10 @@ def createTree(word, angle, distance):
     bevel.segments = 2
     # Add subdivision surface modifier
     subdivision = obj.modifiers.new(name='Subdivision', type='SUBSURF')
-    # Increse subdiviosn levels viewport
-    subdivision.levels = 2
+    # Set subdivision type to simple
+    subdivision.subdivision_type = 'SIMPLE'
+
+    
     # Add smooth corrective modifier
     smoothcor = obj.modifiers.new(name='CorrectiveSmooth', type='CORRECTIVE_SMOOTH')
     # Set smooth modifier to use only smooth
@@ -305,8 +322,8 @@ def createTree(word, angle, distance):
     smoothcor.use_pin_boundary = True
     # Go to object mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
-   
-#    bpy.ops.curve.select_nth()
+    
+    
 def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     
     
@@ -332,7 +349,7 @@ def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     return vertex, center, heading, inStack
 
 def main():
-    word = createSystem(3, 'X')
+    word = createSystem(ITERATIONS, 'X')
     word = wordCleaner(word)
     word = replacer(word)
     print(word)
