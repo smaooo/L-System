@@ -2,16 +2,14 @@
 
 import bpy
 import bmesh
-import numpy as np
 from bmesh.types import BMVert, BMEdge
-import math
+from math import radians
 import mathutils
-from multiprocessing import Process, Manager
 import os
 from random import randint
 
 # L-System Settings
-ITERATIONS = 5
+ITERATIONS = 3
 
 def processString(word):
   newstr = ''
@@ -81,7 +79,6 @@ def replacer(word):
                 newstr += word[i]
         else:
             newstr += word[i]
-#   print(newstr)
     return newstr
 def createSystem(iters, axiom):
   startString = axiom
@@ -94,7 +91,7 @@ def createSystem(iters, axiom):
 
 def createTree(word, angle, distance):
     # Convert angle to radians
-    angle = math.radians(angle)
+    angle = radians(angle)
     # Set center point location
     center = [0,0,0]
     # Create stack for push action
@@ -107,44 +104,28 @@ def createTree(word, angle, distance):
 
     # Make a new BMesh
     bm = bmesh.new()
-    
+    # Create first Vertex
     vertex = bmesh.ops.create_vert(bm, co = center)['vert'][0]
-    # Select current edges 
-    
-
+    # Create leaf list
+    leaf = []
     # is in stack
     inStack = False
     
+    # Max of steps
     max = len(word)
     index = 0
     # Loop throught the L-System word
     for char in word:
-        print(str(index) + '/' + str(max))
-        #print(len(stack))
+        #Progress
+        print(str(index)) + '/' + str(max))
         index += 1
-        #print(leafRot)
         # Move forward and create a mesh cell
         if char == 'F':   
             # Extrude the marked edges
             vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])['verts'][0]
-            
-            
-            
-           
-            
             # Move selecte vertices forward
-            bmesh.ops.translate(bm, vec=heading, verts=[vertex])
-          
-           
-            # Create the scale vector based on the heading vector
-            #scaleVec = [diameter / prevDiameter for i in range(0,3)]
-            # Scale the edge loop
-            #bmesh.ops.scale(bm, vec = scaleVec, verts = tmpVerts)
-            # Update previous diameter
-            #prevDiameter = diameter
-            # Get raw vertices
-            #rawVerts = [v.co for v in tmpVerts]
-             # Calculate current center
+            bmesh.ops.translate(bm, vec=heading, verts=[vertex])   
+            # set current center
             center = vertex.co
             
 
@@ -248,13 +229,11 @@ def createTree(word, angle, distance):
             inStack = True
         # Pop
         elif char == ']':
+            l = bmesh.ops.create_vert(bm, co = center)
+            leaf.append(l)
             vertex, tmpheading, center = stack.pop()
-            heading = mathutils.Vector(tmpheading)
-            #markedEdges = stack[0]
-            #heading = mathutils.Vector(stack[1])
-            #center = stack[2]
             inStack = False
-        
+    
     # Remove doubles
     bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
     # Finish up, write the bmesh into a new mesh
@@ -266,21 +245,21 @@ def createTree(word, angle, distance):
 
     # Create an object of the mesh
     obj = bpy.data.objects.new("Object", me)
+    
     # Add object to the scene collection
     bpy.context.collection.objects.link(obj)
 
     # Select and make active
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
+    
     # Add skin modifier
     skin = obj.modifiers.new(name='Skin', type='SKIN')
     # Go to edit mode
     bpy.ops.object.editmode_toggle()
     # Select all vertices
     bpy.ops.mesh.select_all(action='SELECT')
-    # Scale down skin size
-    #bpy.ops.transform.skin_resize(value=(1 - (2 / ITERATIONS), 1 - (2 / ITERATIONS), 1 - (2 / ITERATIONS)), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=False, proportional_edit_falloff='SMOOTH', proportional_size=5.13378, use_proportional_connected=False, use_proportional_projected=False)
-    
+  
     # Deselect all vertices
     bpy.ops.mesh.select_all(action='DESELECT')
     # Go to object  mode
@@ -291,15 +270,17 @@ def createTree(word, angle, distance):
     obj.data.vertices[0].select = True
     # Go to edit mode
     bpy.ops.object.mode_set(mode = 'EDIT')
-    # Scle skin size proportionally
+    # Scle skin size proportionally form bottom vertex
     bpy.ops.transform.skin_resize(value=( ITERATIONS, ITERATIONS, ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=5 * ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
-
     # Go to object mode
-    
     bpy.ops.object.mode_set(mode = 'OBJECT')
+    # Deselct first vertex
     obj.data.vertices[0].select = False
+    # Select last vertex
     obj.data.vertices[-1].select = True
+    # Go to Edit mode
     bpy.ops.object.mode_set(mode = 'EDIT')
+    # Scle skin size proportionally form top vertex
     bpy.ops.transform.skin_resize(value=(0.09 * ITERATIONS, 0.09 * ITERATIONS, 0.09 * ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=5 *  ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
     
     # Add Bevel modifier
@@ -322,8 +303,22 @@ def createTree(word, angle, distance):
     smoothcor.use_pin_boundary = True
     # Go to object mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
-    
-    
+    # Add Material to object
+    # Check if the material is in the file
+    if 'TreeBody' in bpy.data.materials.keys():
+        # If so append it to the object
+        obj.data.materials.append(bpy.data.materials['TreeBody'])
+    else:
+        # if not append it from materials file to this file
+        # Set the filepath
+        filepath = os.path.dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+        # Set the directory
+        directory = os.path.dirname(bpy.data.filepath) + '\\Materials'
+        # Append the material to this file
+        bpy.ops.wm.append(filepath=filepath, directory = directory, filename='Materials.blend\\Material\TreeBody')        
+        # Append the material to the object
+        obj.data.materials.append(bpy.data.materials['TreeBody'])
+        
 def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     
     
@@ -349,15 +344,15 @@ def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     return vertex, center, heading, inStack
 
 def main():
+    # Create L-system
     word = createSystem(ITERATIONS, 'X')
+    # Clean up the word
     word = wordCleaner(word)
+    # Add 3d rotations to the word
     word = replacer(word)
-    print(word)
-    
    
     angle = 22.5
     distance = 0.5
-    #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
     createTree(word, angle, distance)
     
 if __name__ == "__main__":
