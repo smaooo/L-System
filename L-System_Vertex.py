@@ -11,7 +11,7 @@ import os
 from random import randint, choice
 
 # L-System Settings
-ITERATIONS = 3
+ITERATIONS = 5
 
 def processString(word):
   newstr = ''
@@ -96,7 +96,7 @@ def createTree(word, angle, distance):
     # Create stack for push action
     stack = []
     # Set current heading
-    heading = mathutils.Vector([0,0,distance]).normalized()
+    heading = mathutils.Vector([0,0,distance])
     
     # Set rotation matrix
     rotationMat = mathutils.Matrix()
@@ -114,7 +114,7 @@ def createTree(word, angle, distance):
     index = 0
     # Loop throught the L-System word
     for char in word:
-        print(char)
+        
   
         #Progress
         print(str(index) + '/' + str(max))
@@ -122,9 +122,9 @@ def createTree(word, angle, distance):
         # Move forward and create a mesh cell
         if char == 'F':   
             # Extrude the marked edges
-            vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])
-            edge = vertex['edges']
-            vertex = vertex['verts'][0]
+            vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])['verts'][0]
+            
+
             # Move selecte vertices forward
             bmesh.ops.translate(bm, vec=heading, verts=[vertex])   
             # set current center
@@ -139,7 +139,7 @@ def createTree(word, angle, distance):
             # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'Z')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
@@ -151,7 +151,7 @@ def createTree(word, angle, distance):
             #                [0, 0, 1]]
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'Z')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
@@ -161,7 +161,7 @@ def createTree(word, angle, distance):
             
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'Y')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
@@ -172,7 +172,7 @@ def createTree(word, angle, distance):
             #                [math.sin(angle), 0, -math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'Y')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
                 
@@ -183,7 +183,7 @@ def createTree(word, angle, distance):
             #                [0, -math.sin(angle), math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'X')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
@@ -194,7 +194,7 @@ def createTree(word, angle, distance):
             #                [0, math.sin(angle), -math.cos(angle)]]
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'X')
             # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, edge, inStack)
+            tmpRotation = rotateEdges(bm, heading, rotationMat, vertex, inStack)
             # Update selected edges and their center
             vertex, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
             
@@ -208,6 +208,7 @@ def createTree(word, angle, distance):
             #l = bmesh.ops.create_vert(bm, co = center)
             #leaf.append(l)
             vertex, tmpheading, center = stack.pop()
+            heading = mathutils.Vector(tmpheading)
             inStack = False
     
     # Remove doubles
@@ -297,16 +298,14 @@ def createTree(word, angle, distance):
         # Append the material to the object
         obj.data.materials.append(bpy.data.materials['TreeBody'])
         
-def rotateEdges(bm, heading, rotationMat, vertex, edge, inStack):
+def rotateEdges(bm, heading, rotationMat, vertex, inStack):
     
     
     if inStack:
         
         #Duplicate selected edges
         #vertex = bmesh.ops.duplicate(bm, geom = [vertex])['geom'][0]
-        vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])
-        edge = vertex['edges']
-        vertex = vertex['verts'][0]
+        vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])['verts'][0]
         inStack = False
     if vertex == None:
         center = [0,0,0]
@@ -314,14 +313,14 @@ def rotateEdges(bm, heading, rotationMat, vertex, edge, inStack):
         # Calculate current center
         center = vertex.co
     # Rotate the edge      
-    print(edge[0].verts) 
-    bmesh.ops.rotate(bm, cent = edge[0].verts[0].co, matrix = rotationMat, verts = edge[0].verts)
+     
+    #bmesh.ops.rotate(bm, cent = edge[0].verts[0].co, matrix = rotationMat, verts = edge[0].verts)
     
     # Update heading vector
    
     heading.rotate(rotationMat)
     vertex.normal_update()
-    return vertex, center, heading.normalized(), inStack
+    return vertex, center, heading, inStack
 
 def main():
     # Create L-system
@@ -330,9 +329,10 @@ def main():
     word = wordCleaner(word)
     # Add 3d rotations to the word
     word = replacer(word)
-    print(word)
+    
     angle = 25.7
     distance = 0.5
+    #FFFF[^FF[&FF][&FF]FFFF][\FF[/FF][\FF]FFFF]FFFFFF[/FF][/FF]FFFF
     createTree(word, angle, distance)
     
 if __name__ == "__main__":
