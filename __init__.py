@@ -1,27 +1,10 @@
-
-if "bpy" in locals():
-
-	import importlib
-	importlib.reload(TestClass)
-
-    #TestClass.init()
-
-
-else:
-	import bpy
-
-	from . import (
-		TestClass
-	)
-
-
 bl_info = {
-    "name": "L_TEst",
-    "author": "Your Name Here",
+    "name": "Tree",
+    "author": "Soroush Mohammadzadeh Azari",
     "version": (1, 0),
-    "blender": (2, 80, 0),
+    "blender": (2, 93, 0),
     "location": "View3D > Add > Mesh > New Object",
-    "description": "Adds a new Mesh Object",
+    "description": "Creates a tree based on L-System",
     "warning": "",
     "doc_url": "",
     "category": "Add Mesh",
@@ -29,84 +12,81 @@ bl_info = {
 
 
 import bpy
+from os.path import dirname
 from bpy.types import Operator
-from bpy.props import FloatVectorProperty
+import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from mathutils import Vector
 
 
-def add_object(self, context):
-    scale_x = self.scale.x
-    scale_y = self.scale.y
-
-    verts = [
-        Vector((-1 * scale_x, 1 * scale_y, 0)),
-        Vector((1 * scale_x, 1 * scale_y, 0)),
-        Vector((1 * scale_x, -1 * scale_y, 0)),
-        Vector((-1 * scale_x, -1 * scale_y, 0)),
-    ]
-
-    edges = []
-    faces = [[0, 1, 2, 3]]
-
-    mesh = bpy.data.meshes.new(name="New Object Mesh")
-    mesh.from_pydata(verts, edges, faces)
-    # useful for development when the mesh may be invalid.
-    # mesh.validate(verbose=True)
-    object_data_add(context, mesh, operator=self)
-
-
+def initiateLSystem(self, context):
+    rules = {'rule1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}},
+            'rule2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}},
+            'rule3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF-[-F+F+F]+[+F-F-F]'}},
+            'rule4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[+X]F[-X]+X'}},
+            'rule5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}},
+            'rule6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}}}
+    
+    
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
-    """Create a new Mesh Object"""
-    bl_idname = "mesh.add_object"
-    bl_label = "Add Mesh Object"
+    pcoll = bpy.utils.previews.new()
+    iconPath = dirname(bpy.data.filepath) + '\Materials\Icon.png'
+    pcoll.load("tree_icon", iconPath, 'IMAGE')
+    icon = pcoll['tree_icon']
+    """Create a new Tree"""
+    bl_idname = "mesh.add_tree"
+    bl_label = "Create Tree"
     bl_options = {'REGISTER', 'UNDO'}
-
-    scale: FloatVectorProperty(
-        name="scale",
-        default=(1.0, 1.0, 1.0),
-        subtype='TRANSLATION',
-        description="scaling",
-    )
+    ruleItems = [('rule1', 'Rule 1', "Rule 1", icon.icon_id, 1),
+                ('rule2', 'Rule 2', 'Rule 2', icon.icon_id, 2),
+                ('rule3', 'Rule 3', 'Rule 3', icon.icon_id, 3),
+                ('rule2', 'Rule 2', 'Rule 4', icon.icon_id, 4),
+                ('rule5', 'Rule 5', 'Rule 5', icon.icon_id, 5),
+                ('rule6', 'Rule 6', 'Rule 6', icon.icon_id, 6)]
+    rule: prop.EnumProperty(
+        items = ruleItems,
+        name = 'Rule')
+        
+    genNum: prop.IntProperty(
+        name='Number of Generations',
+        description = 'Number of Generations',
+        default = 5,
+        min = 1, max = 10)
+    
+    size: prop.FloatProperty(
+        name = 'Size',
+        description = 'Size of the tree', 
+        min = 0.1)
 
     def execute(self, context):
 
-        add_object(self, context)
-
+        initiateLSystem(self,context)
         return {'FINISHED'}
 
 
 # Registration
 
 def add_object_button(self, context):
+    pcoll = preview_collections["main"]
+    icon = pcoll['tree_icon']
     self.layout.operator(
         OBJECT_OT_add_object.bl_idname,
-        text="Add Object",
-        icon='PLUGIN')
+        text="Tree",
+        icon_value = icon.icon_id)
+    
 
-
-# This allows you to right click on a button and link to documentation
-def add_object_manual_map():
-    TestClass.printTest(45)
-
-    url_manual_prefix = "https://docs.blender.org/manual/en/latest/"
-    url_manual_mapping = (
-        ("bpy.ops.mesh.add_object", "scene_layout/object/types.html"),
-    )
-    return url_manual_prefix, url_manual_mapping
-
-
+preview_collections = {}
 def register():
-    TestClass.register()
-    bpy.utils.register_class(TestClass)
+    pcoll = bpy.utils.previews.new()
+    iconPath = dirname(bpy.data.filepath) + '\Materials\Icon.png'
+    pcoll.load("tree_icon", iconPath, 'IMAGE')
+    preview_collections['main'] = pcoll
     bpy.utils.register_class(OBJECT_OT_add_object)
-    bpy.utils.register_manual_map(add_object_manual_map)
     bpy.types.VIEW3D_MT_mesh_add.append(add_object_button)
 
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
-    bpy.utils.unregister_manual_map(add_object_manual_map)
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
 
