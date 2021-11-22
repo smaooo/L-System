@@ -6,7 +6,8 @@ from os.path import dirname
 from random import randint, choice
 
 # L-System Settings
-ITERATIONS = 3
+ITERATIONS = 6
+
 
 
 def processString(word):
@@ -217,7 +218,7 @@ def createTree(word, angle, distance):
     # Go to edit mode
     bpy.ops.object.mode_set(mode = 'EDIT')
     # Scle skin size proportionally form bottom vertex
-    bpy.ops.transform.skin_resize(value=( ITERATIONS, ITERATIONS, ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=2 * ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
+    bpy.ops.transform.skin_resize(value=( log(ITERATIONS,3)*ITERATIONS /2, log(ITERATIONS,3)*ITERATIONS/2, log(ITERATIONS,3)*ITERATIONS/2), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=log(ITERATIONS,3)* log(ITERATIONS, 2) * ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
     # Go to object mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
     # Deselct first vertex
@@ -227,7 +228,7 @@ def createTree(word, angle, distance):
     # Go to Edit mode
     bpy.ops.object.mode_set(mode = 'EDIT')
     # Scle skin size proportionally form top vertex
-    bpy.ops.transform.skin_resize(value=(0.09 * ITERATIONS, 0.09 * ITERATIONS, 0.09 * ITERATIONS), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=2 *  ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
+    bpy.ops.transform.skin_resize(value=(log(ITERATIONS,3) , log(ITERATIONS,3) , log(ITERATIONS,3) ), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=log(ITERATIONS,3)* 1000, use_proportional_connected=False, use_proportional_projected=False)
     
     # Add Bevel modifier
     bevel = obj.modifiers.new(name='Bevel', type='BEVEL')
@@ -300,7 +301,7 @@ def createTree(word, angle, distance):
     particle.settings.particle_size = log(6 * ITERATIONS) / 10
     particle.settings.size_random = 1
     particle.settings.use_rotation_instance = True
-    particle.settings.count = pow(1000, log(ITERATIONS,3)) / 10
+    particle.settings.count = int(pow(1000, log(ITERATIONS,3)) / 10)
     bpy.context.scene.view_layers[0].layer_collection.children['Leaf'].exclude = True
 def main():
     # Create L-system
