@@ -1,12 +1,13 @@
 import bpy
 import bmesh
-from math import radians
+from math import radians, log, pow
 import mathutils
 from os.path import dirname
 from random import randint, choice
 
 # L-System Settings
-ITERATIONS = 5
+ITERATIONS = 3
+
 
 def processString(word):
   newstr = ''
@@ -165,7 +166,8 @@ def createTree(word, angle, distance):
             vertex, tmpheading, center = stack.pop()
             # Create the heading vector
             heading = mathutils.Vector(tmpheading)
-            
+           
+    """ CONVERTING VERTICES TO MESHES """        
     # Remove doubles
     bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
     # Finish up, write the bmesh into a new mesh
@@ -192,38 +194,9 @@ def createTree(word, angle, distance):
     # Select and make active
     bpy.context.view_layer.objects.active = obj
     # Select leaves
-    objLeaf.select_set(True)
-    # Set tree as parent 
-    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
-    # Make leaves active selection
-    bpy.context.view_layer.objects.active = objLeaf
-    # Add particle System for leaves
-    bpy.ops.object.particle_system_add()
-    # Assign particle system to a variable
-    particle = objLeaf.particle_systems.active
-    # Set particle system to hair
-    particle.settings.type = 'HAIR'
-    # Set hairs to grow from vertices
-    particle.settings.emit_from = 'VERT'
-    # Set hairs render type to object
-    particle.settings.render_type = 'OBJECT'
-    if 'L' not in bpy.data.objects.keys():
-        filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
-        # Set the directory
-        directory = dirname(bpy.data.filepath) + '\\Materials'
-        # Append the material to this file
-        bpy.ops.wm.append(filepath=filepath, directory = directory, filename='Materials.blend\\Collection\Leaf') 
-    # Select leaf mesh
-    particle.settings.instance_object = bpy.data.objects['L']
-    particle.settings.use_emit_random = False
-    particle.settings.use_advanced_hair = True
-    particle.settings.use_rotations = True
-    particle.settings.rotation_mode = 'NOR'
-    particle.settings.rotation_factor_random = 1
-    particle.settings.phase_factor_random = 0.690391
-    particle.settings.particle_size = 0.383
-    particle.settings.size_random = 1
-    particle.settings.use_rotation_instance = True
+    obj.select_set(True)
+    
+    """ MODIFYING AND OPTIMIZING TREE VERTICES """
     # Add skin modifier
     skin = obj.modifiers.new(name='Skin', type='SKIN')
     skin.branch_smoothing = 1
@@ -292,6 +265,43 @@ def createTree(word, angle, distance):
         # Append the material to the object
         obj.data.materials.append(bpy.data.materials['TreeBody'])
         
+        
+    """ PARTICLE SYSTEM """    
+    # Select leaves
+    objLeaf.select_set(True)
+    # Set tree as parent 
+    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+    # Make leaves active selection
+    bpy.context.view_layer.objects.active = objLeaf
+    # Add particle System for leaves
+    bpy.ops.object.particle_system_add()
+    # Assign particle system to a variable
+    particle = objLeaf.particle_systems.active
+    # Set particle system to hair
+    particle.settings.type = 'HAIR'
+    # Set hairs to grow from vertices
+    particle.settings.emit_from = 'VERT'
+    # Set hairs render type to object
+    particle.settings.render_type = 'OBJECT'
+    if 'L' not in bpy.data.objects.keys():
+        filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+        # Set the directory
+        directory = dirname(bpy.data.filepath) + '\\Materials'
+        # Append the material to this file
+        bpy.ops.wm.append(filepath=filepath, directory = directory, filename='Materials.blend\\Collection\Leaf') 
+    # Select leaf mesh
+    particle.settings.instance_object = bpy.data.objects['L']
+    particle.settings.use_emit_random = False
+    particle.settings.use_advanced_hair = True
+    particle.settings.use_rotations = True
+    particle.settings.rotation_mode = 'NOR'
+    particle.settings.rotation_factor_random = 1
+    particle.settings.phase_factor_random = 0.690391
+    particle.settings.particle_size = log(6 * ITERATIONS) / 10
+    particle.settings.size_random = 1
+    particle.settings.use_rotation_instance = True
+    particle.settings.count = pow(1000, log(ITERATIONS,3)) / 10
+    bpy.context.scene.view_layers[0].layer_collection.children['Leaf'].exclude = True
 def main():
     # Create L-system
     word = createSystem(ITERATIONS, 'X')
