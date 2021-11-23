@@ -30,8 +30,10 @@ def initiateLSystem(self, context):
 
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
-
-    numCusRules = 1
+    def __init__(self):
+        
+    
+        self.numCusRules = 1
     pcoll = bpy.utils.previews.new()
     iconPath = dirname(bpy.data.filepath) + '\Materials\Icon.png'
     pcoll.load("tree_icon", iconPath, 'IMAGE')
@@ -97,6 +99,12 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     customRule3: prop.StringProperty(
         name = 'Production Rule',
         description = 'Producion Rule')
+    numCusRules: prop.IntProperty(name='Number of Rules',
+        description = 'Number of Custom Rules',
+        default = 1,
+        min = 1, max = 3)
+    def add_rule(self):
+        self.numCusRules += 1
 
     def draw(self, context):
         
@@ -112,16 +120,15 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             row.prop(self, 'axiom')
             row.prop(self, 'angle')
             box = layout.box()
-            row = box.row()
-            for num in range(1,self.numCusRules + 1):
-                print(num)
+            
+            for num in range(1,self.numCusRules+1):
+                row = box.row()
                 a = ('customVariable' + str(num), 'customRule' + str(num))
                 row.prop(self, a[0]) 
                 row.prop(self, a[1])
             row = box.row()
-            #row.prop(self, property = 'addRule', icon_only = True, event = True, icon = 'ADD')
-            row.operator(operator = 'add_tree.add_rule', icon = 'ADD')
             
+            row.prop(self, 'numCusRules')
 
             
     
@@ -132,10 +139,19 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
 
 class ADD_TREE_OT_add_rule(Operator, AddObjectHelper):
     bl_idname = "add_tree.add_rule"
-    bl_label = "Add RUle"
+    bl_label = "Add Rule"
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-        print(45)
+        #o = OBJECT_OT_add_object(None) 
+        #o.add_rule()
+        return {'FINISHED'}
+class ADD_TREE_OT_remove_rule(Operator, AddObjectHelper):
+    bl_idname = "add_tree.remove_rule"
+    bl_label = "Remove Rule"
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        numCusRules -= 1
+        
         return {'FINISHED'}
 def add_object_button(self, context):
     pcoll = preview_collections["main"]
@@ -154,12 +170,14 @@ def register():
     preview_collections['main'] = pcoll
     bpy.utils.register_class(OBJECT_OT_add_object)
     bpy.utils.register_class(ADD_TREE_OT_add_rule)
+    bpy.utils.register_class(ADD_TREE_OT_remove_rule)    
     bpy.types.VIEW3D_MT_mesh_add.append(add_object_button)
 
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
     bpy.utils.unregister_class(ADD_TREE_OT_add_rule)
+    bpy.utils.unregister_class(ADD_TREE_OT_remove_rule)    
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
 
