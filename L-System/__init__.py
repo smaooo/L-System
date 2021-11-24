@@ -160,16 +160,13 @@ def register():
     iconPath = dirname(bpy.data.filepath) + '\Materials\Icon.png'
     pcoll.load("tree_icon", iconPath, 'IMAGE')
     preview_collections['main'] = pcoll
-    bpy.utils.register_class(OBJECT_OT_add_object)
-    bpy.utils.register_class(ADD_TREE_OT_add_rule)
-    bpy.utils.register_class(ADD_TREE_OT_remove_rule)    
+    bpy.utils.register_class(OBJECT_OT_add_object)   
     bpy.types.VIEW3D_MT_add.append(add_object_button)
     LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
-    bpy.utils.unregister_class(ADD_TREE_OT_add_rule)
-    bpy.utils.unregister_class(ADD_TREE_OT_remove_rule)    
+  
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
     LSystem.unregister()
