@@ -185,7 +185,34 @@ class LSystem:
         bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
         # Convert tree bmesh to mesh and add it as a object to the scene
         treeObj = self.convertToMesh('Tree', bmTree)
-        #
+        
+        """ SKIN MODIFIER"""
+        # Add skin modifier to tree object
+        skin = treeObj.modifiers.new(name='Skin', type='SKIN')
+        # Set skin Modifier settings
+        skin.branch_smoothing = 1 # Branch smoothing
+        skin.use_x_symmetry = False # Disabling active symmetry
+
+        # Go to edit mode for modifying skin size around the tree
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        # Deselect all vertices
+        bpy.ops.mesh.select_all(action = 'DESELECT')
+        # Go back to the object mode to select the first and bottom vertex of the tree
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        # Select the first and bottom vertex of the tree structure
+        treeObj.data.vertices[0].select = True
+        # Go to edit mode
+        bpy.ops.object.mode_set(mode = 'EDIT')
+        # Scale skin size proportionally from bottom vertex
+        bpy.ops.transform.skin_resize(value = [log(self.generation,3) * self.generation / 2 for i in range(3)],
+                                    orient_type='GLOBAL',
+                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+                                    orient_matrix_type='GLOBAL',
+                                    mirror=True,
+                                    use_proportional_edit=True, proportional_edit_falloff='ROOT',
+                                    proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation,
+                                    use_proportional_connected=False, use_proportional_projected=False)
+
 
     def addLeaves(self):
         # Set leaves bmesh
@@ -196,7 +223,7 @@ class LSystem:
         bpy.context.view_layer.objects.active = leavesObj
         # Select leaves
         leavesObj.select_set(True)
-        
+
     # Convert BMesh to Mesh
     def convertToMesh(self, objectName: str, bm: BMesh) -> Object:
         # Create a new empty mesh
