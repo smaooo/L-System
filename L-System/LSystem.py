@@ -4,11 +4,9 @@ from bpy.types import Object
 import bmesh
 from bmesh.types import BMesh
 from math import radians, log, pow
-import mathutils
-from mathutils import Matrix
-from mathutils.Matrix import Vector, Rotation
+from mathutils import Matrix, Vector
 from os.path import dirname
-from random import randint, choice
+from random import choice
 
 
 
@@ -37,7 +35,11 @@ class LSystem:
         self.word = self.initSystem()
         # Create tree Structure
         self.tree, self.leaves = self.createTree()
-        
+        # Create tree skin and mesh
+        self.shapeTree()
+        # Add leaves to the tree
+        self.addLeaves()
+
     # Initialize system
     def initSystem(self) -> str:
         # Set the axiom as the first character of the L-System word
@@ -175,17 +177,19 @@ class LSystem:
 
     def rotateHeading(self, heading: Vector, angleNegation: int, rotationAxis: str) -> Vector:
         # Rotate heading based on the rotation matrix
-        heading.rotate(Rotation(self.angle * angleNegation, 3, rotationAxis))
+        heading.rotate(Matrix.Rotation(self.angle * angleNegation, 3, rotationAxis))
         return heading
 
     # Create skin around tree and clean up the tree structure
-    def shapeTree(self):
+    def shapeTree(self) -> None:
         # Set tree bmesh
         bmTree = self.tree
         # Remove double vertices from tree structure
         bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
         # Convert tree bmesh to mesh and add it as a object to the scene
         treeObj = self.convertToMesh('Tree', bmTree)
+        # Select and make active
+        bpy.context.view_layer.objects.active = treeObj
         # Select tree object
         treeObj.select_set(True)
 
@@ -266,7 +270,7 @@ class LSystem:
         # Go to edit mode
         bpy.ops.object.mode_set(mode = 'EDIT')
 
-    def addLeaves(self):
+    def addLeaves(self) -> None:
         # Set leaves bmesh
         bmLeaf = self.leaves
         # Convert leaves vertices to mesh and add it as a object to the scen
@@ -295,7 +299,7 @@ class LSystem:
         particle = leavesObj.particle_systems.active
         # Particle system settings
         particle.settings.type = 'HAIR' # Set particle system to hair
-        particle.setting.use_advanced_hair = True # Use advanced settings for the particle system
+        particle.settings.use_advanced_hair = True # Use advanced settings for the particle system
         particle.settings.count = int(pow(1000, log(self.generation,3)) / 10) # Set the number of hairs base on the number of generations
         particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
         particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
@@ -310,8 +314,8 @@ class LSystem:
         particle.settings.use_rotation_instance = True # Use instance object rotation
         
         # Deactive leaf object collection and exclude it from the scene
-        bpy.context.scene.view_layers[0].layer_collection.childeren['Leaf'].exclude = True
-         
+        bpy.context.scene.view_layers[0].layer_collection.children['Leaf'].exclude = True
+
     # Convert BMesh to Mesh
     def convertToMesh(self, objectName: str, bm: BMesh) -> Object:
         # Create a new empty mesh
@@ -333,4 +337,4 @@ def unregister():
     bpy.utils.unregister_class(LSystem)
     
 
-l = LSystem('system5', 7, 0.5)
+l = LSystem('system5', 5, 0.5, 'STYLE2')
