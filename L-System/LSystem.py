@@ -186,6 +186,8 @@ class LSystem:
         bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
         # Convert tree bmesh to mesh and add it as a object to the scene
         treeObj = self.convertToMesh('Tree', bmTree)
+        # Select tree object
+        treeObj.select_set(True)
         
         """ SKIN MODIFIER"""
         # Add skin modifier to tree object
@@ -236,7 +238,23 @@ class LSystem:
         # Smooth corrective modifier settings
         smoothCor.use_only_smooth = True # Use Only Smooth
         smoothCor.use_pin_boundary = True # Use Pin Boundaries
-        
+
+        # Go to the object mode
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+
+        """ASSIGNING MATERIAL TO THE TREE OBJECT"""
+        # If TreeBody material is not in the blend file
+        if 'TreeBody' not in bpy.data.materials.keys():
+            # Set the filepath for material
+            filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+            # Set the directory path
+            directory = dirname(bpy.data.filepath) + '\\Materials'
+            # Append TreeBody material from materials blend file
+            bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\Material\TreeBody')
+        # Assign material to the tree object
+        treeObj.data.materials.append(bpy.data.materials['TreeBody'])
+
+
     def selSingleVert(self, object: Object, vertIndex: int) -> None:
         # Go to the object mode to select the given vertex
         bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -258,6 +276,8 @@ class LSystem:
         # Select leaves
         leavesObj.select_set(True)
 
+        """PARTICLE SYSTEM"""
+        leavesObj.select_set = True
     # Convert BMesh to Mesh
     def convertToMesh(self, objectName: str, bm: BMesh) -> Object:
         # Create a new empty mesh
