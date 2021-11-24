@@ -1,8 +1,8 @@
 if "bpy" in locals():
     import importlib as imp
-    imp.reload(classTest)
+    imp.reload(LSystem)
 else:
-    from . import classTest
+    from . import LSystem
 
 
 
