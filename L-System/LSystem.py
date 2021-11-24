@@ -197,22 +197,34 @@ class LSystem:
         bpy.ops.object.mode_set(mode = 'EDIT')
         # Deselect all vertices
         bpy.ops.mesh.select_all(action = 'DESELECT')
-        # Go back to the object mode to select the first and bottom vertex of the tree
-        bpy.ops.object.mode_set(mode = 'OBJECT')
-        # Select the first and bottom vertex of the tree structure
-        treeObj.data.vertices[0].select = True
-        # Go to edit mode
-        bpy.ops.object.mode_set(mode = 'EDIT')
+        # Select the firts and bottom vertex of tree object
+        self.selSingleVert(treeObj, 0)
         # Scale skin size proportionally from bottom vertex
-        bpy.ops.transform.skin_resize(value = [log(self.generation,3) * self.generation / 2 for i in range(3)],
-                                    orient_type='GLOBAL',
-                                    orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)),
-                                    orient_matrix_type='GLOBAL',
+        bpy.ops.transform.skin_resize(value = [(log(self.generation,3) * self.generation / 2) for i in range(3)],
+                                    orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
                                     mirror=True,
                                     use_proportional_edit=True, proportional_edit_falloff='ROOT',
                                     proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation,
                                     use_proportional_connected=False, use_proportional_projected=False)
+        # Select the top last vertex
+        self.selSingleVert(treeObj, -1)
+        # Scale skin size proportionally from top vertex
+        bpy.ops.transform.skin_resize(value = [log(self.generation,3) for i in range(3)],
+                                    orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', 
+                                    mirror=True, 
+                                    use_proportional_edit=True, proportional_edit_falloff='ROOT', 
+                                    proportional_size=log(self.generation,3)* 1000, use_proportional_connected=False, use_proportional_projected=False)
 
+    def selSingleVert(self, object: Object, vertIndex: int) -> None:
+        # Go to the object mode to select the given vertex
+        bpy.ops.object.mode_set(mode = 'OBJECT')
+        # Make sure none of the vertices are selected
+        for i in range(len(object.data.vertices)):
+            object.data.vertices[i].select = False 
+        # Select the first and bottom vertex of the tree structure
+        object.data.vertices[vertIndex].select = True
+        # Go to edit mode
+        bpy.ops.object.mode_set(mode = 'EDIT')
 
     def addLeaves(self):
         # Set leaves bmesh
