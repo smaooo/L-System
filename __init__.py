@@ -5,11 +5,11 @@ bl_info = {
     "author": "Soroush Mohammadzadeh Azari",
     "version": (1, 0),
     "blender": (2, 93, 0),
-    "location": "View3D > Add > Mesh > New Object",
+    "location": " ",
     "description": "Creates a tree based on L-System",
     "warning": "",
     "doc_url": "",
-    "category": "Add Mesh",
+    "category": "Add",
 }
 
 
@@ -40,7 +40,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     pcoll.load("tree_icon", iconPath, 'IMAGE')
     icon = pcoll['tree_icon']
     """Create a new Tree"""
-    bl_idname = "mesh.add_tree"
+    bl_idname = "object.add_tree"
     bl_label = "Create Tree"
     bl_options = {'REGISTER', 'UNDO'}
 

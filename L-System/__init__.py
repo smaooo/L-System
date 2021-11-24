@@ -7,7 +7,7 @@ else:
 
 
 bl_info = {
-    "name": "Tree",
+    "name": "L-System Tree",
     "author": "Soroush Mohammadzadeh Azari",
     "version": (1, 0),
     "blender": (2, 93, 0),
@@ -23,8 +23,8 @@ import bpy
 from os.path import dirname
 from bpy.types import Operator
 import bpy.props as prop
-from bpy_extras.object_utils import AddObjectHelper, object_data_add
-from mathutils import Vector
+from bpy_extras.object_utils import AddObjectHelper
+
 
 
 def initiateLSystem(self, context):
@@ -145,22 +145,6 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         initiateLSystem(self,context)
         return {'FINISHED'}
 
-class ADD_TREE_OT_add_rule(Operator, AddObjectHelper):
-    bl_idname = "add_tree.add_rule"
-    bl_label = "Add Rule"
-    bl_options = {'REGISTER', 'UNDO'}
-    def execute(self, context):
-        #o = OBJECT_OT_add_object(None) 
-        #o.add_rule()
-        return {'FINISHED'}
-class ADD_TREE_OT_remove_rule(Operator, AddObjectHelper):
-    bl_idname = "add_tree.remove_rule"
-    bl_label = "Remove Rule"
-    bl_options = {'REGISTER', 'UNDO'}
-    def execute(self, context):
-        numCusRules -= 1
-        
-        return {'FINISHED'}
 def add_object_button(self, context):
     pcoll = preview_collections["main"]
     icon = pcoll['tree_icon']
@@ -179,8 +163,8 @@ def register():
     bpy.utils.register_class(OBJECT_OT_add_object)
     bpy.utils.register_class(ADD_TREE_OT_add_rule)
     bpy.utils.register_class(ADD_TREE_OT_remove_rule)    
-    bpy.types.VIEW3D_MT_mesh_add.append(add_object_button)
-    classTest.register()
+    bpy.types.VIEW3D_MT_add.append(add_object_button)
+    LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
@@ -188,6 +172,6 @@ def unregister():
     bpy.utils.unregister_class(ADD_TREE_OT_remove_rule)    
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
-    classTest.unregister()
+    LSystem.unregister()
 if __name__ == "__main__":
     register()
