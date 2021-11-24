@@ -15,10 +15,11 @@ from random import randint, choice
 
 class LSystem:
     # Initialize L-System Class
-    def __init__(self, system: str, generation: int, size: float):
+    def __init__(self, system: str, generation: int, size: float, style: str):
         self.generation = generation
         self.system = system
         self.size = size
+        self.style = style
         # Set preset rules
         self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}},
             'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}},
@@ -215,6 +216,27 @@ class LSystem:
                                     use_proportional_edit=True, proportional_edit_falloff='ROOT', 
                                     proportional_size=log(self.generation,3)* 1000, use_proportional_connected=False, use_proportional_projected=False)
 
+        """BEVEL MODIFIER (only for STYLE1)"""
+        if self.style == 'STYLE1':
+            # Add Bevel modifier
+            bevel = treeObj.modifiers.new(name = 'Bevel', type = 'BEVEL')
+            # Set bevel modifier settings
+            bevel.affect = 'VERTICES' # Bevel only affect of vertices and not edges
+            bevel.segments = 2 # Number of bevel segments
+
+        """SUBDIVISION MODIFIER"""
+        subdivision = treeObj.modifiers.new(name='Subdivision', type='SUBSURF')
+        # Subdivision settings
+        subdivision.subdivision_type = 'SIMPLE' # Subdivision type
+        subdivision.levels = 2 # levels of viewport display
+
+        """SMOOTH CORRECTIVE MODIFIER"""
+        # Add smooth corrective modifier
+        smoothCor = treeObj.modifiers.new(name = 'CorrectiveSmooth', type = 'CORRECTIVE_SMOOTH')
+        # Smooth corrective modifier settings
+        smoothCor.use_only_smooth = True # Use Only Smooth
+        smoothCor.use_pin_boundary = True # Use Pin Boundaries
+        
     def selSingleVert(self, object: Object, vertIndex: int) -> None:
         # Go to the object mode to select the given vertex
         bpy.ops.object.mode_set(mode = 'OBJECT')
