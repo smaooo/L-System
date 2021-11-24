@@ -1,8 +1,12 @@
 
 import bpy
+from bpy.types import Object
 import bmesh
+from bmesh.types import BMesh
 from math import radians, log, pow
 import mathutils
+from mathutils import Matrix
+from mathutils.Matrix import Vector, Rotation
 from os.path import dirname
 from random import randint, choice
 
@@ -11,7 +15,7 @@ from random import randint, choice
 
 class LSystem:
     # Initialize L-System Class
-    def __init__(self, system, generation, size):
+    def __init__(self, system: str, generation: int, size: float):
         self.generation = generation
         self.system = system
         self.size = size
@@ -26,12 +30,15 @@ class LSystem:
             'system8': {}}
         # Set user's system of choice
         self.selSystem = self.systems[system]
+        # Set angle
+        self.angle = radians(self.selSystem['angle'])
         # Generate the word
         self.word = self.initSystem()
+        # Create tree Structure
+        self.tree, self.leaves = self.createTree()
         
-        print(self.word)
     # Initialize system
-    def initSystem(self):
+    def initSystem(self) -> str:
         # Set the axiom as the first character of the L-System word
         startString = self.selSystem['axiom']
         endString = ''
@@ -42,7 +49,7 @@ class LSystem:
         return self.wordCleaner(self.rotationReplacer(endString))
 
     # Generate the L-System word 
-    def processString(self, word):
+    def processString(self, word: str) -> str: 
         newstr = ''
         # Go through each character of the word and apply the rules on it
         for character in word:
@@ -51,7 +58,7 @@ class LSystem:
         return newstr
 
     # Apply the production rule(s) on the given character
-    def generateWord(self, character):
+    def generateWord(self, character: str) -> str:
         newstr = ''
         
         # Get the variables and production rules dictionary
@@ -66,7 +73,7 @@ class LSystem:
                     newstr = character
         return newstr
 
-    def rotationReplacer(self, word):
+    def rotationReplacer(self, word: str) -> str:
         rotators = ['/','\\','&','^']
         newstr = ''
         
@@ -81,11 +88,129 @@ class LSystem:
 
         return newstr
 
-    def wordCleaner(self, word):
+    def wordCleaner(self, word: str) -> str:
         word = word.replace('X', '')
         word = word.replace('[+]', '')
         word = word.replace('[-]', '')
         return word
+
+    def createTree(self) -> BMesh:
+        
+        # Set center point position
+        center = [0,0,0]
+        # Create stack for pushing / pulling
+        stack = []
+        # Create heading vector
+        heading = Vector([0, 0, self.size])
+        # Create rotation matrix
+        rotationMat = Matrix()
+
+        # Create a new bmesh for the tree structure
+        bmTree = bmesh.new()
+        # Create a new bmesh for leaf vertices
+        bmLeaf = bmesh.new()
+        
+        # Create the first and bottom vertex of the tree
+        vertex = bmesh.ops.create_vert(bmTree, co = center)['vert'][0]
+
+        for char in self.word:
+            # Extrude and move current vertex in heading vector direction
+            if char == 'F':
+                # Extrude the vertex
+                vertex = bmesh.ops.extrude_vert_indiv(bmTree, verts = [vertex])['verts'][0]
+                # Move extruded vertex according to the heading vector
+                bmesh.ops.translate(bmTree, vec = heading, verts = [vertex])
+                # Update center point to the latest vertex coordination
+                center = vertex.co
+
+            # Turn Left
+            elif char == '+':
+                # Rotate heading Vector (angle) radians around Z and update it
+                heading = self.rotateHeading(heading, 1, 'Z')
+            
+            # Turn Right
+            elif char == '-':
+                # Rotate heading Vector (-angle) radians around Z and update it
+                heading = self.rotateHeading(heading, -1, 'Z')
+
+            # Pitch Down
+            elif char == '&':
+                # Rotate heading Vector (angle) radians around Y and update it
+                heading = self.rotateHeading(heading, 1, 'Y')
+
+            # Pitch Up
+            elif char == '^':
+                # Rotate heading Vector (-angle) radians around Y and update it
+                heading = self.rotateHeading(heading, -1, 'Y')
+            
+            # Roll Left (\)
+            elif char == '\\':
+                # Rotate heading Vector (angle) radians around X and update it
+                heading = self.rotateHeading(heading, 1, 'X')
+            
+            # Roll Right
+            elif char == '/':
+                # Rotate heading Vector (-angle) radians around X and update it
+                heading = self.rotateHeading(heading, -1, 'X')
+
+            # Push current settings to stack
+            elif char == '[':
+                # Push current vertex, heading vector, and center point to the stack
+                stack.append((vertex, (heading.x, heading.y, heading.z), center))
+            
+            # Pull previous settings from stack
+            elif char == ']':
+                # create a vertex and the last vertex of the branch for leaf
+                leaf = bmesh.ops.create_vert(bmLeaf, co = center)['vert'][0]
+
+                # Pull the previous vertex, heading vector, and center from the stack
+                vertex, tmpHeading, center = stack.pop()
+
+                # Update heading vector and create and new vector from pulled heading vector
+                heading = Vector(tmpHeading)
+
+        return bmTree, bmLeaf
+
+
+    def rotateHeading(self, heading: Vector, angleNegation: int, rotationAxis: str) -> Vector:
+        # Rotate heading based on the rotation matrix
+        heading.rotate(Rotation(self.angle * angleNegation, 3, rotationAxis))
+        return heading
+
+    # Create skin around tree and clean up the tree structure
+    def shapeTree(self):
+        # Set tree bmesh
+        bmTree = self.tree
+        # Remove double vertices from tree structure
+        bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
+        # Convert tree bmesh to mesh and add it as a object to the scene
+        treeObj = self.convertToMesh('Tree', bmTree)
+        #
+
+    def addLeaves(self):
+        # Set leaves bmesh
+        bmLeaf = self.leaves
+        # Convert leaves vertices to mesh and add it as a object to the scen
+        leavesObj = self.convertToMesh('Leaves', bmLeaf)
+        # Select the leaves object and set it to active object 
+        bpy.context.view_layer.objects.active = leavesObj
+        # Select leaves
+        leavesObj.select_set(True)
+        
+    # Convert BMesh to Mesh
+    def convertToMesh(self, objectName: str, bm: BMesh) -> Object:
+        # Create a new empty mesh
+        mesh = bpy.data.meshes.new(objectName + 'Mesh')
+        # Convert given bmesh to mesh
+        bm.to_mesh(mesh)
+        # Free memory allocated by bmesh
+        bm.free()
+        # Create an object in the scene with the given mesh
+        obj = bpy.data.objects.new(objectName, mesh)
+        # Add object to the scene collection
+        bpy.context.collection.objects.link(obj)
+
+        return obj
 
 def register():
     bpy.utils.register_class(LSystem)
