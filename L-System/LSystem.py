@@ -188,7 +188,7 @@ class LSystem:
         treeObj = self.convertToMesh('Tree', bmTree)
         # Select tree object
         treeObj.select_set(True)
-        
+
         """ SKIN MODIFIER"""
         # Add skin modifier to tree object
         skin = treeObj.modifiers.new(name='Skin', type='SKIN')
@@ -275,9 +275,43 @@ class LSystem:
         bpy.context.view_layer.objects.active = leavesObj
         # Select leaves
         leavesObj.select_set(True)
+        # Make leaves object child of tree object
+        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+        # Make leaves active sleection
+        bpy.context.view_layer.objects.active = leavesObj
 
         """PARTICLE SYSTEM"""
-        leavesObj.select_set = True
+        # If leaf object is not in the blend file
+        if 'L' not in bpy.data.objects.keys():
+            # Set filepath for leaf object blend file
+            filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+            # Set directory for leaf object blend file
+            directory = dirname(bpy.data.filepath) + '\\Materials'
+            # Append leaf object to the blend file
+            bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\\Collection\Leaf')
+        # Add particle system to leaves object
+        bpy.ops.object.particle_system_add()
+        # Assign particle system to a variable
+        particle = leavesObj.particle_systems.active
+        # Particle system settings
+        particle.settings.type = 'HAIR' # Set particle system to hair
+        particle.setting.use_advanced_hair = True # Use advanced settings for the particle system
+        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10) # Set the number of hairs base on the number of generations
+        particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
+        particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
+        particle.settings.instance_object = bpy.data.objects['L'] # Set hair instance object to leaf object 
+        particle.settings.use_emit_random = False # Don't use random order for instance object
+        particle.settings.use_rotations = True # Use Rotation for instance objects
+        particle.settings.rotation_mode = 'NOR' # Set vertices normals as rotation mode for instance objects 
+        particle.settings.rotation_factor_random = 1 # Set rotation randomization to maximum
+        particle.settings.phase_factor_random = 0.690391 # Set rotation randomization phase
+        particle.settings.particle_size = log(6 * self.generation) / 10 # Set instance object scale based on the number of generations
+        particle.settings.size_random = 1 # Set scale size randomization to maximum
+        particle.settings.use_rotation_instance = True # Use instance object rotation
+        
+        # Deactive leaf object collection and exclude it from the scene
+        bpy.context.scene.view_layers[0].layer_collection.childeren['Leaf'].exclude = True
+         
     # Convert BMesh to Mesh
     def convertToMesh(self, objectName: str, bm: BMesh) -> Object:
         # Create a new empty mesh
