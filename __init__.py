@@ -1,3 +1,5 @@
+
+
 bl_info = {
     "name": "Tree",
     "author": "Soroush Mohammadzadeh Azari",
@@ -17,23 +19,22 @@ from bpy.types import Operator
 import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 from mathutils import Vector
-
+from typing import List
 
 def initiateLSystem(self, context):
-    rules = {'rule1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}},
-            'rule2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}},
-            'rule3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF-[-F+F+F]+[+F-F-F]'}},
-            'rule4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[+X]F[-X]+X'}},
-            'rule5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}},
-            'rule6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}}}
-    
+    if self.customVariable1 != '':
+        system = {'axiom': self.axiom, 'angle': self.angle, 'rule': {}}
+        
+    print(self.customVariable1 == '')
 
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
+    global customRule
     
-    def __init__(self):
-        
+    def addRule(self, value):
+        print(value)
+        customRule[1] = 1
+        print(self.customRule)
     
-        self.numCusRules = 1
     pcoll = bpy.utils.previews.new()
     iconPath = dirname(bpy.data.filepath) + '\Materials\Icon.png'
     pcoll.load("tree_icon", iconPath, 'IMAGE')
@@ -42,6 +43,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     bl_idname = "mesh.add_tree"
     bl_label = "Create Tree"
     bl_options = {'REGISTER', 'UNDO'}
+
     ruleItems = [('rule1', 'Rule 1', "Rule 1", icon.icon_id, 1),
                 ('rule2', 'Rule 2', 'Rule 2', icon.icon_id, 2),
                 ('rule3', 'Rule 3', 'Rule 3', icon.icon_id, 3),
@@ -75,12 +77,14 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         name = 'Angle',
         description = 'Rotation Angle',
         default = 0)
+    
     customVariable1: prop.StringProperty(
         name = 'Variable',
         description = 'Variable')   
     customRule1: prop.StringProperty(
         name = 'Production Rule',
-        description = 'Producion Rule')
+        description = 'Producion Rule',
+        set = addRule)
     customVariable2: prop.StringProperty(
         name = 'Variable',
         description = 'Variable')   
@@ -103,8 +107,6 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         description = 'Number of Custom Rules',
         default = 1,
         min = 1, max = 3)
-    def add_rule(self):
-        self.numCusRules += 1
 
     def draw(self, context):
         
@@ -114,6 +116,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         layout.prop(self, 'rule')
         layout.prop(self, 'genNum')
         layout.prop(self, 'size')
+        
         if self.rule == 'custom':
             
             row = layout.row()
@@ -123,7 +126,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             
             for num in range(1,self.numCusRules+1):
                 row = box.row()
-                a = ('customVariable' + str(num), 'customRule' + str(num))
+                a = ('customVariable1', 'customRule1')
                 row.prop(self, a[0]) 
                 row.prop(self, a[1])
             row = box.row()
@@ -180,6 +183,6 @@ def unregister():
     bpy.utils.unregister_class(ADD_TREE_OT_remove_rule)    
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
-
+   
 if __name__ == "__main__":
     register()

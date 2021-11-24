@@ -1,16 +1,14 @@
-# This script uses bmesh operators to make 2 links of a chain.
-
 import bpy
 import bmesh
-import numpy as np
-from bmesh.types import BMVert, BMEdge
-import math
+from math import radians, log, pow
 import mathutils
-from multiprocessing import Process, Manager
-import os
-from random import randint
-CONSTANTS = ['+','-','/','\\','&','∧','|','!','[',']']
-VARIABLES = ['A','B','C','D']
+from os.path import dirname
+from random import randint, choice
+
+# L-System Settings
+ITERATIONS = 6
+
+
 
 def processString(word):
   newstr = ''
@@ -21,27 +19,7 @@ def processString(word):
   
 def applyRules(character):
 
-    #newstr = ''
-    #if character == 'A':
-    #    newstr = 'B-F+CFC+F-D&F∧D-F+&&CFC+F+B//'
-    #elif character == 'B':
-    #    newstr = 'A&F∧CFB∧F∧D∧∧-F-D∧|F∧B|FC∧F∧A//'
-    #elif character == 'C':
-    #    newstr = '|D∧|F∧B-F+C∧F∧A&&FA&F∧C+F+B∧F∧D//'
-    #elif character == 'D':
-    #    newstr = '|CFB-F+B|FA&F∧A&&FB-F+B|FC//'
-    #else:
-    #    newstr = ''
-    #return newstr
     newstr = ''
-    #if character == 'F':
-    #    newstr = 'S/////F'
-    #elif character == 'A':
-    #    newstr = '[&FL!A]/////’[&FL!A]///////’[&FL!A]'
-    #elif character == 'S':
-    #    newstr = 'FL'
-    #else:
-    newstr = character
     
     if character == 'F':
         newstr = 'FF'
@@ -49,34 +27,41 @@ def applyRules(character):
     elif character == 'X':
         #rand = randint(0,1)
         #if rand == 0:
-        #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
+        #    newstr = 'F-[[X]+X]+F[+FX]-X'
         #elif rand == 1:
-        #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
+        #    newstr = 'F+[[X]-X]-F[-FX]+X'
         newstr = 'F[+X][-X]FX'
     else:
       newstr = character
+    
     return newstr
-
+ 
+ 
 def wordCleaner(word):
     word = word.replace('X', '')
     word = word.replace('[+]', '')
     word = word.replace('[-]', '')
     return word
- 
- 
+
 def replacer(word):
     rotators = ['/','\\','&','^']
     newstr = ''
     
     for i in range(0, len(word)):
         if word[i] == '+' or word[i] ==  '-':
-             c = rotators[randint(0, 3)]
-             newstr += c
+            #rand = randint(0,3)
+            #if rand == 1 or rand == 2:
+            
+            c = choice(rotators)
+            newstr += c
+            #else:
+                #print(word[i])
+            #    newstr += word[i]
         else:
-            #print(word[i])
             newstr += word[i]
-#   print(newstr)
+
     return newstr
+
 def createSystem(iters, axiom):
   startString = axiom
   endString = ''
@@ -88,265 +73,246 @@ def createSystem(iters, axiom):
 
 def createTree(word, angle, distance):
     # Convert angle to radians
-    angle = math.radians(angle)
-    # Set current diameter
-    diameter = 0.4
-    # Set previous diameter
-    prevDiameter = 0.4
+    angle = radians(angle)
     # Set center point location
     center = [0,0,0]
     # Create stack for push action
     stack = []
     # Set current heading
     heading = mathutils.Vector([0,0,distance])
-    # Set scale vector for top edge of the cell
-    scaleVec = [0,0,0]
+    
     # Set rotation matrix
     rotationMat = mathutils.Matrix()
-    #leafRot = mathutils.Matrix()
-    leafRot = mathutils.Euler((0,0,0), 'XYZ')
-    firstRot = True
-    # Make a new BMesh
-    bm = bmesh.new()
-    tmpCircle = bmesh.ops.create_circle(
-                            bm,
-                            cap_ends=False,
-                            radius= diameter / 2,
-                            segments=8)
-    
-    # Select current edges 
-    markedEdges = [e for e in bm.edges]
 
-    # is in stack
-    inStack = False
-    
+    # Make a new BMesh for the tree
+    bm = bmesh.new()
+    # Make a new BMesh for the leaves
+    bmLeaf = bmesh.new()
+    # Create first Vertex
+    vertex = bmesh.ops.create_vert(bm, co = center)['vert'][0]
+    # Create leaf list
+    #leaf = []
+    # Max of steps
     max = len(word)
     index = 0
     # Loop throught the L-System word
     for char in word:
+        
+  
+        #Progress
         print(str(index) + '/' + str(max))
-        #print(len(stack))
         index += 1
-        #print(leafRot)
         # Move forward and create a mesh cell
         if char == 'F':   
             # Extrude the marked edges
-            extruded = bmesh.ops.extrude_edge_only(bm, edges=markedEdges)
-            
-            # Update the marked edges for next itteration
-            markedEdges = [e for e in extruded['geom'] if isinstance(e, BMEdge)]
-            
-            # Get current marked edge vertices for translation and scale
-            tmpVerts = list(set([v for e in markedEdges for v in e.verts]))
-            
+            vertex = bmesh.ops.extrude_vert_indiv(bm, verts = [vertex])['verts'][0]
             # Move selecte vertices forward
-            bmesh.ops.translate(bm, vec=heading, verts=tmpVerts)
-          
-           
-            # Create the scale vector based on the heading vector
-            scaleVec = [diameter / prevDiameter for i in range(0,3)]
-            # Scale the edge loop
-            bmesh.ops.scale(bm, vec = scaleVec, verts = tmpVerts)
-            # Update previous diameter
-            prevDiameter = diameter
-            # Get raw vertices
-            rawVerts = [v.co for v in tmpVerts]
-             # Calculate current center
-            center = sum(rawVerts, mathutils.Vector()) / len(rawVerts)
-            # Reset rotation Matrix
-
-            
+            bmesh.ops.translate(bm, vec=heading, verts=[vertex])   
+            # set current center
+            center = vertex.co
+      
         # Turn left
         elif char == '+':
-            #rotationMat = [[math.cos(angle), -math.sin(angle), 0],
-            #                [math.sin(angle), math.cos(angle), 0],
-            #                [0, 0, 1]]
             # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'Z')
-            
-            #print(mathutils.Matrix.Rotation(angle, 3, 'Z'))
-            #print(mathutils.Matrix.Rotation(angle, 3, 'X') @ mathutils.Matrix.Rotation(angle, 3, 'Y')) 
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
-            
+            # Rotate heading vector
+            heading.rotate(rotationMat)  
           
         # Turn right
         elif char == '-':
-            #rotationMat = [[-math.cos(angle), math.sin(angle), 0],
-            #                [-math.sin(angle), -math.cos(angle), 0],
-            #                [0, 0, 1]]
+            # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'Z')
-            #leafRot.rotate_axis('Y', -angle)
-            
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
+            # Rotate heading vector
+            heading.rotate(rotationMat)
             
         # Pitch down
         elif char == '&':
-           
-            
+            # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'Y')
-            
-            #leafRot = leafRot @ rotationMat
-            leafRot.rotate_axis('Z', -angle)
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
+            # Rotate heading vector
+            heading.rotate(rotationMat)
             
         # pitch up
         elif char == '^':
-            #rotationMat = [[-math.cos(angle), 0, -math.sin(angle)],
-            #                [0, 1, 0],
-            #                [math.sin(angle), 0, -math.cos(angle)]]
+            # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'Y')
-            
-            leafRot.rotate_axis('Z', angle)
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
-                
+            # Rotate heading vector
+            heading.rotate(rotationMat)
+           
         # Roll left (\)
         elif char == '\\':
-            #rotationMat = [[1, 0, 0],
-            #                [0, math.cos(angle), math.sin(angle)],
-            #                [0, -math.sin(angle), math.cos(angle)]]
+            # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(angle, 3, 'X')
-            
-            leafRot.rotate_axis('X', angle)
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
-            
+            # Rotate heading vector
+            heading.rotate(rotationMat)
+             
         # Roll right
         elif char == '/':
-            #rotationMat = [[1, 0, 0],
-            #                [0, -math.cos(angle), -math.sin(angle)],
-            #                [0, math.sin(angle), -math.cos(angle)]]
+            # Set the rotation matrix
             rotationMat = mathutils.Matrix.Rotation(-angle, 3, 'X')
-            
-            #leafRot = leafRot @ rotationMat
-            leafRot.rotate_axis('X', -angle)
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
-            
-                
-        # Turn around (angle: 180)
-        elif char == '|':
-            #rotationMat = [[math.cos(math.radians(180)), -math.sin(math.radians(180)), 0],
-            #                [math.sin(math.radians(180)), math.cos(math.radians(180)), 0],
-            #                [0, 0, 1]]
-            rotationMat = mathutils.Matrix.Rotation(math.radians(180), 3, 'Z')              
-            # Duplicate and rotate selected edges
-            tmpRotation = rotateEdges(bm, heading, rotationMat, markedEdges, diameter, prevDiameter, inStack)
-            # Update selected edges and their center
-            markedEdges, center, heading, inStack = tmpRotation[0], tmpRotation[1], tmpRotation[2], tmpRotation[3]
-            
-        # Create leaf
-        elif char == 'L':
-            
-            matLoc = mathutils.Matrix.Translation(center)
-            #print('track')
-            #print(center.to_track_quat('X', 'Z').to_matrix())
-            #print(leafRot.to_matrix().to_4x4())
-            matOut = matLoc @ leafRot.to_matrix().to_4x4()
-            
-            #print(matOut.decompose())
-            leaf = bmesh.ops.create_uvsphere(bm,
-                                        u_segments = 3,
-                                        v_segments = 6,
-                                        diameter = diameter,
-                                        matrix = matOut)
-           
-            #leafRot = mathutils.Matrix()
-       
-        # increment the diameter
-        elif char == '!':
-            prevDiameter = diameter
-            diameter /= 1.1
+            # Rotate heading vector
+            heading.rotate(rotationMat)
+                   
         # Push
         elif char == '[': 
-            stack.append((markedEdges, (heading.x, heading.y, heading.z), center))
-            inStack = True
+            # Append current vertex, heading vector, and center to the stack list as a new tuple
+            stack.append((vertex, (heading.x, heading.y, heading.z), center))
+        
         # Pop
         elif char == ']':
-            markedEdges, tmpheading, center = stack.pop()
+            leaf = bmesh.ops.create_vert(bmLeaf, co = center)['vert'][0]
+            #l = bmesh.ops.create_vert(bm, co = center)
+            #leaf.append(l)
+            # Get the previous vertex, heading vector, and center from the stack list
+            vertex, tmpheading, center = stack.pop()
+            # Create the heading vector
             heading = mathutils.Vector(tmpheading)
-            #markedEdges = stack[0]
-            #heading = mathutils.Vector(stack[1])
-            #center = stack[2]
-            inStack = False
-        
-        
+           
+    """ CONVERTING VERTICES TO MESHES """        
+    # Remove doubles
+    bmesh.ops.remove_doubles(bm, verts = bm.verts, dist = 0.0001)
     # Finish up, write the bmesh into a new mesh
-    me = bpy.data.meshes.new("Mesh")
+    meshTree = bpy.data.meshes.new("TreeMesh")
     # Create a mesh from bmesh
-    bm.to_mesh(me)
+    bm.to_mesh(meshTree)
     # Free memory allocated by bmesh
     bm.free()
-
     # Create an object of the mesh
-    obj = bpy.data.objects.new("Object", me)
+    obj = bpy.data.objects.new("Tree", meshTree)
     # Add object to the scene collection
     bpy.context.collection.objects.link(obj)
-
+    
+    # write the leaves bmesh into a new mesh
+    meshLeaf = bpy.data.meshes.new("LeavesMesh")
+    # Create a mesh from bmesh
+    bmLeaf.to_mesh(meshLeaf)
+    # Free memory allocated by bmesh
+    bmLeaf.free()
+    # Create an object of the mesh
+    objLeaf = bpy.data.objects.new("Leaves", meshLeaf)
+    # Add object to the scene collection
+    bpy.context.collection.objects.link(objLeaf)
     # Select and make active
     bpy.context.view_layer.objects.active = obj
+    # Select leaves
     obj.select_set(True)
-
-def rotateEdges(bm, heading, rotationMat, selEdges, diameter, prevDiameter, inStack):
-    scaleVec = [diameter / prevDiameter for i in range(0,3)]
     
-    if inStack:
-        #Duplicate selected edges
-        dupli = bmesh.ops.duplicate(bm, geom = selEdges)
-        #Update selected edges
-        markedEdges = [e for e in dupli['geom'] if isinstance(e, BMEdge)]
-    
-    else:
-        markedEdges = selEdges
-
-    # Get raw vertices
-    rawVerts = [v.co for v in list(set([v for e in markedEdges for v in e.verts]))]
-    if not len(rawVerts):
-        center = [0,0,0]
-    else:
-        # Calculate current center
-        center = sum(rawVerts, mathutils.Vector()) / len(rawVerts)
-    # Scale the ed.ge
-    bmesh.ops.scale(bm, vec = scaleVec, verts = list(set([v for e in markedEdges for v in e.verts]))) 
-    # Rotate the edge       
-    bmesh.ops.rotate(bm, cent = center, matrix = rotationMat, verts = list(set([v for e in markedEdges for v in e.verts])))
+    """ MODIFYING AND OPTIMIZING TREE VERTICES """
+    # Add skin modifier
+    skin = obj.modifiers.new(name='Skin', type='SKIN')
+    skin.branch_smoothing = 1
+    skin.use_x_symmetry = False
+    # Go to edit mode
+    bpy.ops.object.editmode_toggle()
+    # Select all vertices
+    bpy.ops.mesh.select_all(action='SELECT')
   
-    # Update heading vector
-    heading.rotate(rotationMat)
+    # Deselect all vertices
+    bpy.ops.mesh.select_all(action='DESELECT')
+    # Go to object  mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    
+    
+    # Select the first vertex (bottom one)
+    obj.data.vertices[0].select = True
+    # Go to edit mode
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    # Scle skin size proportionally form bottom vertex
+    bpy.ops.transform.skin_resize(value=( log(ITERATIONS,3)*ITERATIONS /2, log(ITERATIONS,3)*ITERATIONS/2, log(ITERATIONS,3)*ITERATIONS/2), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=log(ITERATIONS,3)* log(ITERATIONS, 2) * ITERATIONS, use_proportional_connected=False, use_proportional_projected=False)
+    # Go to object mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    # Deselct first vertex
+    obj.data.vertices[0].select = False
+    # Select last vertex
+    obj.data.vertices[-1].select = True
+    # Go to Edit mode
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    # Scle skin size proportionally form top vertex
+    bpy.ops.transform.skin_resize(value=(log(ITERATIONS,3) , log(ITERATIONS,3) , log(ITERATIONS,3) ), orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', mirror=True, use_proportional_edit=True, proportional_edit_falloff='ROOT', proportional_size=log(ITERATIONS,3)* 1000, use_proportional_connected=False, use_proportional_projected=False)
+    
+    # Add Bevel modifier
+    bevel = obj.modifiers.new(name='Bevel', type='BEVEL')
+    # Set bevel effect on vertices
+    bevel.affect = 'VERTICES'
+    # Increase bevel segments
+    bevel.segments = 2
+    # Add subdivision surface modifier
+    subdivision = obj.modifiers.new(name='Subdivision', type='SUBSURF')
+    # Set subdivision type to simple
+    subdivision.subdivision_type = 'SIMPLE'
 
-    if inStack:
-        inStack = False
-        return markedEdges, center, heading, inStack
-
+    
+    # Add smooth corrective modifier
+    smoothcor = obj.modifiers.new(name='CorrectiveSmooth', type='CORRECTIVE_SMOOTH')
+    # Set smooth modifier to use only smooth
+    smoothcor.use_only_smooth = True
+    # Set smooth modifier to use pin boundaries
+    smoothcor.use_pin_boundary = True
+    # Go to object mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    # Add Material to object
+    # Check if the material is in the file
+    if 'TreeBody' in bpy.data.materials.keys():
+        # If so append it to the object
+        obj.data.materials.append(bpy.data.materials['TreeBody'])
     else:
-        return selEdges, center, heading, inStack
-
+        # if not append it from materials file to this file
+        # Set the filepath
+        filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+        # Set the directory
+        directory = dirname(bpy.data.filepath) + '\\Materials'
+        # Append the material to this file
+        bpy.ops.wm.append(filepath=filepath, directory = directory, filename='Materials.blend\\Material\TreeBody')        
+        # Append the material to the object
+        obj.data.materials.append(bpy.data.materials['TreeBody'])
+        
+        
+    """ PARTICLE SYSTEM """    
+    # Select leaves
+    objLeaf.select_set(True)
+    # Set tree as parent 
+    bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
+    # Make leaves active selection
+    bpy.context.view_layer.objects.active = objLeaf
+    # Add particle System for leaves
+    bpy.ops.object.particle_system_add()
+    # Assign particle system to a variable
+    particle = objLeaf.particle_systems.active
+    # Set particle system to hair
+    particle.settings.type = 'HAIR'
+    # Set hairs to grow from vertices
+    particle.settings.emit_from = 'VERT'
+    # Set hairs render type to object
+    particle.settings.render_type = 'OBJECT'
+    if 'L' not in bpy.data.objects.keys():
+        filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+        # Set the directory
+        directory = dirname(bpy.data.filepath) + '\\Materials'
+        # Append the material to this file
+        bpy.ops.wm.append(filepath=filepath, directory = directory, filename='Materials.blend\\Collection\Leaf') 
+    # Select leaf mesh
+    particle.settings.instance_object = bpy.data.objects['L']
+    particle.settings.use_emit_random = False
+    particle.settings.use_advanced_hair = True
+    particle.settings.use_rotations = True
+    particle.settings.rotation_mode = 'NOR'
+    particle.settings.rotation_factor_random = 1
+    particle.settings.phase_factor_random = 0.690391
+    particle.settings.particle_size = log(6 * ITERATIONS) / 10
+    particle.settings.size_random = 1
+    particle.settings.use_rotation_instance = True
+    particle.settings.count = int(pow(1000, log(ITERATIONS,3)) / 10)
+    bpy.context.scene.view_layers[0].layer_collection.children['Leaf'].exclude = True
 def main():
-    word = createSystem(3, 'X')
-    print(len(word))
+    # Create L-system
+    word = createSystem(ITERATIONS, 'X')
+    # Clean up the word
     word = wordCleaner(word)
-    print(word)
-    print(len(word))
+    # Add 3d rotations to the word
     word = replacer(word)
     
     angle = 25.7
     distance = 0.5
-    #F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]F[-F]F[+F[+F]F[-F]F[+F[+F]F[-F]F]F[+F]F[-F]F[-F[+F]F[-F]F]F[+F]
     createTree(word, angle, distance)
     
 if __name__ == "__main__":
