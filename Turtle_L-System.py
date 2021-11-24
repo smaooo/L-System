@@ -60,7 +60,7 @@ def applyRules(character):
   
       
     if character == 'F':
-        newstr = 'FF'
+        newstr = 'FF-[-F+F+F]+[+F-F-F]'
       #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
         #rand = randint(0,1)
@@ -101,6 +101,7 @@ def drawLsystem(t, word, angle, distance):
       stack.append((t.position(), t.heading()))
       
     elif character == ']':
+      """
       colors = ['#b9c21d', '#90a900', '#547b01', '#304c02', 'green', '#f4d200', '#e68828']
 
       t.fillcolor(colors[randint(0,len(colors) -1)])
@@ -113,6 +114,7 @@ def drawLsystem(t, word, angle, distance):
       t.left(135)
       t.forward(distance)
       t.end_fill()
+      """
       t.pu()
       position, heading = stack.pop()
       t.goto(position[0], position[1])
@@ -122,14 +124,18 @@ def drawLsystem(t, word, angle, distance):
       
 def main():
   
-  word = createSystem(7, 'X')
+  word = createSystem(5, 'X')
   print(word)
   
-  angle = 25.7
-  distance = 5
+  angle = 22.5
+
+  distance = 20
   turtle.hideturtle()
   t = turtle
   wn = turtle.Screen()
+  t.begin_fill()
+ 
+  t.width(7)
   #t.hideturtle()
   #t.clear()
   #t.up()
@@ -141,9 +147,14 @@ def main():
   t.setheading(90)
   print(t.screensize())
   #t.down()
-  t.speed('fastest  ')
+  t.speed('fastest')
   #t.heading(0)
   drawLsystem(t, word, angle, distance)
+  a = True
+  while(a):
+    b = input()
+    if b == 'a':
+      break
   #while (True):
   #  if keyboard.is_pressed('q'):
   #    break

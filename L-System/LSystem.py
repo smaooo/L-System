@@ -37,7 +37,6 @@ class LSystem:
         self.angle = radians(self.selSystem['angle'])
         # Generate the word
         self.word = self.initSystem()
-        print(self.word)
         # Create tree Structure
         self.tree, self.leaves = self.createTree()
         # Create tree skin and mesh

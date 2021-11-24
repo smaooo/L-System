@@ -41,18 +41,23 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     bl_idname = "mesh.add_tree"
     bl_label = "Create Tree"
     bl_options = {'REGISTER', 'UNDO'}
+    pcoll = bpy.utils.previews.new()
+    installationPath = dirname(abspath(__file__))
+    iconPath = [join(installationPath, 'Materials\System{}.png'.format(i) for i in range(1,9))]
+    for icon in iconPath:
+        pcoll.load("System{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
+    icon = pcoll['tree_icon']
+    ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
+                ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
+                ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
+                ('system4', 'System 2', 'System 4',pcoll['System4'].icon_id, 4),
+                ('system5', 'System 5', 'System 5',pcoll['System5'].icon_id, 5),
+                ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
+                ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
+                ('system8', 'System 8', 'System 8',pcoll['System8'].icon_id, 8)]
 
-    ruleItems = [('system1', 'System 1', "System 1", 1),
-                ('system2', 'System 2', 'System 2', 2),
-                ('system3', 'System 3', 'System 3', 3),
-                ('system4', 'System 2', 'System 4', 4),
-                ('system5', 'System 5', 'System 5', 5),
-                ('system6', 'System 6', 'System 6', 6),
-                ('system7', 'System 7', 'System 7', 7),
-                ('system8', 'System 8', 'System 8', 8)]
-
-    styles = [('STYLE1', 'Style 1', 'Style 1'),
-            ('STYLE2', 'Style 2', 'Style 2')]
+    styles = [('STYLE1', 'Jagged', 'Jagged Mesh'),
+            ('STYLE2', 'Smooth', 'Smooth and organic')]
 
     rule: prop.EnumProperty(
         items = ruleItems,
@@ -108,7 +113,6 @@ def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = join(installationPath, 'Materials\Icon.png')
-    print(iconPath)
     pcoll.load("tree_icon", iconPath, 'IMAGE')
     icon = pcoll['tree_icon']
     self.layout.operator(
