@@ -5,19 +5,23 @@ import bmesh
 from bmesh.types import BMesh
 from math import radians, log, pow
 from mathutils import Matrix, Vector
-from os.path import dirname
-from random import choice
+from os.path import dirname, abspath, join
+from random import choice, seed, shuffle
 
 
 
 
 class LSystem:
+    bl_idname = "mesh.l_system"
+    bl_label = "l_system"
+    bl_options = {'REGISTER', 'UNDO'}
     # Initialize L-System Class
-    def __init__(self, system: str, generation: int, size: float, style: str):
+    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int):
         self.generation = generation
         self.system = system
         self.size = size
         self.style = style
+        self.randSeed = randSeed
         # Set preset rules
         self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}},
             'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}},
@@ -33,6 +37,7 @@ class LSystem:
         self.angle = radians(self.selSystem['angle'])
         # Generate the word
         self.word = self.initSystem()
+        print(self.word)
         # Create tree Structure
         self.tree, self.leaves = self.createTree()
         # Create tree skin and mesh
@@ -78,8 +83,9 @@ class LSystem:
 
     def rotationReplacer(self, word: str) -> str:
         rotators = ['/','\\','&','^']
+        shuffle(rotators)
         newstr = ''
-        
+        seed(self.randSeed)
         for i in range(0, len(word)):
             if word[i] == '+' or word[i] ==  '-':
                
@@ -250,9 +256,10 @@ class LSystem:
         # If TreeBody material is not in the blend file
         if 'TreeBody' not in bpy.data.materials.keys():
             # Set the filepath for material
-            filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+            installationPath = dirname(abspath(__file__))
+            filepath = join(installationPath, 'Materials\Materials.blend')
             # Set the directory path
-            directory = dirname(bpy.data.filepath) + '\\Materials'
+            directory = join(installationPath, 'Materials')
             # Append TreeBody material from materials blend file
             bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\Material\TreeBody')
         # Assign material to the tree object
@@ -288,11 +295,12 @@ class LSystem:
         # If leaf object is not in the blend file
         if 'L' not in bpy.data.objects.keys():
             # Set filepath for leaf object blend file
-            filepath = dirname(bpy.data.filepath) + '\Materials\Materials.blend'
+            installationPath = dirname(abspath(__file__))
+            filepath = join(installationPath, 'Materials\Materials.blend')
             # Set directory for leaf object blend file
-            directory = dirname(bpy.data.filepath) + '\\Materials'
+            directory = join(installationPath, 'Materials')
             # Append leaf object to the blend file
-            bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\\Collection\Leaf')
+            bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\\Collection\Leaf', active_collection = False)
         # Add particle system to leaves object
         bpy.ops.object.particle_system_add()
         # Assign particle system to a variable
@@ -330,11 +338,3 @@ class LSystem:
         bpy.context.collection.objects.link(obj)
 
         return obj
-
-def register():
-    bpy.utils.register_class(LSystem)
-def unregister():
-    bpy.utils.unregister_class(LSystem)
-    
-
-l = LSystem('system5', 5, 0.5, 'STYLE2')
