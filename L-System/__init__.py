@@ -43,10 +43,14 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO'}
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
-    iconPath = [join(installationPath, 'Materials\System{}.png'.format(i) for i in range(1,9))]
+    iconPath = []
+    for i in range(1,9):
+        partPath = 'Materials\System{}.png'.format(i)
+        iconPath.append(join(installationPath, partPath))
+    print(iconPath)
     for icon in iconPath:
         pcoll.load("System{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
-    icon = pcoll['tree_icon']
+    
     ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
                 ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
                 ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
@@ -67,7 +71,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     genNum: prop.IntProperty(
         name='Generations',
         description = 'Number of Generations',
-        default = 5,
+        default = 3,
         min = 1, max = 10)
     
     size: prop.FloatProperty(

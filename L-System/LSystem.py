@@ -6,7 +6,7 @@ from bmesh.types import BMesh
 from math import radians, log, pow
 from mathutils import Matrix, Vector
 from os.path import dirname, abspath, join
-from random import choice, seed, shuffle
+from random import choice, seed, shuffle, choices
 
 
 
@@ -23,13 +23,13 @@ class LSystem:
         self.style = style
         self.randSeed = randSeed
         # Set preset rules
-        self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}},
-            'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}},
-            'system3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF-[-F+F+F]+[+F-F-F]'}},
-            'system4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[+X]F[-X]+X'}},
-            'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}},
-            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}},
-            'system7': {},
+        self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}, 'stochastic': False},
+            'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}, 'stochastic': False},
+            'system3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF-[-F+F+F]+[+F-F-F]'}, 'stochastic': False},
+            'system4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[+X]F[-X]+X'}, 'stochastic': False},
+            'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}, 'stochastic': False},
+            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
+            'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
             'system8': {}}
         # Set user's system of choice
         self.selSystem = self.systems[system]
@@ -67,17 +67,40 @@ class LSystem:
     # Apply the production rule(s) on the given character
     def generateWord(self, character: str) -> str:
         newstr = ''
-        
-        # Get the variables and production rules dictionary
-        rules = self.selSystem['rule']
-        # Variables are the keys of the dictionary
-        variables = list(rules.keys())
-        for i in range(len(variables)):
+        # If system is not stochastic
+        if self.selSystem['stochastic'] is not True:
+            # Get the variables and production rules dictionary
+            rules = self.selSystem['rule']
+            # Variables are the keys of the dictionary
+            variables = list(rules.keys())
+            # For the number of production rules
+            for i in range(len(variables)):
+                # if current character is one of the rules
+                if character in variables:
+                    # if current character is the rule character
+                    if character == variables[i]:
+                        # Change character using the production rule
+                        newstr = rules[variables[i]]
+                else:
+                        newstr = character
+        # If system is stochastic
+        else:
+            # Get Variables of the system
+            variables = list(self.selSystem['rule'].keys())[0]
+            # Get production rules of the system
+            rules = self.selSystem['rule'][list(self.selSystem['rule'])[0]]
+            # Create a list for distributing the rules based on the given chances
+            stoRules = []
+            # Create the distributed list
+            for key in list(rules.keys()):
+                tmpList = [rules[key] for i in range(key)]
+                stoRules += tmpList
+            
             if character in variables:
-                if character == variables[i]:
-                    newstr = rules[variables[i]]
+                if character == variables:
+                    newstr = choice(stoRules)
             else:
-                    newstr = character
+                newstr = character
         return newstr
 
     def rotationReplacer(self, word: str) -> str:
@@ -197,14 +220,16 @@ class LSystem:
         bpy.context.view_layer.objects.active = treeObj
         # Select tree object
         treeObj.select_set(True)
-
+        
         """ SKIN MODIFIER"""
         # Add skin modifier to tree object
         skin = treeObj.modifiers.new(name='Skin', type='SKIN')
         # Set skin Modifier settings
         skin.branch_smoothing = 1 # Branch smoothing
         skin.use_x_symmetry = False # Disabling active symmetry
-
+        if self.style == 'STYLE2':
+            skin.use_smooth_shade = True
+            treeObj.data.use_auto_smooth = True
         # Go to edit mode for modifying skin size around the tree
         bpy.ops.object.mode_set(mode = 'EDIT')
         # Deselect all vertices
@@ -238,7 +263,10 @@ class LSystem:
         """SUBDIVISION MODIFIER"""
         subdivision = treeObj.modifiers.new(name='Subdivision', type='SUBSURF')
         # Subdivision settings
-        subdivision.subdivision_type = 'SIMPLE' # Subdivision type
+        if self.style == 'STYLE1':
+            subdivision.subdivision_type = 'SIMPLE' # Subdivision type
+        else: 
+            subdivision.subdivision_type = 'CATMULL_CLARK' # Subdivision type
         subdivision.levels = 2 # levels of viewport display
 
         """SMOOTH CORRECTIVE MODIFIER"""
@@ -281,8 +309,6 @@ class LSystem:
         bmLeaf = self.leaves
         # Convert leaves vertices to mesh and add it as a object to the scen
         leavesObj = self.convertToMesh('Leaves', bmLeaf)
-        # Select the leaves object and set it to active object 
-        bpy.context.view_layer.objects.active = leavesObj
         # Select leaves
         leavesObj.select_set(True)
         # Make leaves object child of tree object

@@ -60,7 +60,7 @@ def applyRules(character):
   
       
     if character == 'F':
-        newstr = 'FF-[-F+F+F]+[+F-F-F]'
+        newstr = 'FX[FX[+XF]]'
       #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
         #rand = randint(0,1)
@@ -68,7 +68,9 @@ def applyRules(character):
         #    newstr = 'F-[[XL]+X]+F[+FXL]-XL'
         #elif rand == 1:
         #    newstr = 'F+[[XL]-X]-F[-FXL]+XL'
-        newstr = 'F[+XL][-XL]FX'
+        newstr = 'FF[+XZ++X-F[+ZX]][-X++F-X]'
+    elif character == 'Z':
+      newstr = '[+F-X-F][++ZX]'
     else:
       newstr = character
     return newstr
@@ -124,18 +126,18 @@ def drawLsystem(t, word, angle, distance):
       
 def main():
   
-  word = createSystem(5, 'X')
+  word = createSystem(4, 'X')
   print(word)
   
   angle = 22.5
 
-  distance = 20
+  distance = 5
   turtle.hideturtle()
   t = turtle
   wn = turtle.Screen()
   t.begin_fill()
  
-  t.width(7)
+  t.width(2)
   #t.hideturtle()
   #t.clear()
   #t.up()
