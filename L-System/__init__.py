@@ -25,12 +25,22 @@ from bpy.types import Operator
 import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper
 
+system = None
 
 
 def initiateLSystem(self, context):
-   
+    global system
     system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed)
-
+def create_tree_shape():
+    global system
+    system.shapeTree()
+class MESH_OT_tree_structure(bpy.types.Operator):
+    bl_label = "Create Tree Structure"
+    bl_idname = "mesh.tree_structure"
+    global system
+    def execute(self, context):
+        create_tree_shape()
+        return {'FINISHED'}
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
     #pcoll = bpy.utils.previews.new()
@@ -44,6 +54,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = []
+
     for i in range(1,9):
         partPath = 'Materials\System{}.png'.format(i)
         iconPath.append(join(installationPath, partPath))
@@ -54,7 +65,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
                 ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
                 ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
-                ('system4', 'System 2', 'System 4',pcoll['System4'].icon_id, 4),
+                ('system4', 'System 4', 'System 4',pcoll['System4'].icon_id, 4),
                 ('system5', 'System 5', 'System 5',pcoll['System5'].icon_id, 5),
                 ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
                 ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
@@ -64,32 +75,36 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         partPath = 'Materials\Style{}.png'.format(i)
         iconPath.append(join(installationPath, partPath))
     for icon in iconPath:
-        pcoll.load("Style{}".format(iconPath.index(iconPath)+1), icon, 'IMAGE')
+        pcoll.load("Style{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
 
     styles = [('STYLE1', 'Jagged', 'Jagged Mesh', pcoll['Style1'].icon_id, 1),
             ('STYLE2', 'Smooth', 'Smooth and organic', pcoll['Style2'].icon_id, 2)]
 
     rule: prop.EnumProperty(
         items = ruleItems,
-        name = 'Rule')
+        name = 'Rule'
+    )
 
 
     genNum: prop.IntProperty(
         name='Generations',
         description = 'Number of Generations',
         default = 3,
-        min = 1, max = 10)
+        min = 1, max = 10
+    )
     
     size: prop.FloatProperty(
         name = 'Size',
         description = 'Size of the tree', 
         min = 0.1, 
-        default = 0.5)
+        default = 0.5
+    )
     
     
     style: prop.EnumProperty(
         items = styles,
-        name = 'Style'
+        name = 'Style',
+        default = 'STYLE2'
     )
     
     seed: prop.IntProperty(
@@ -99,7 +114,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         min = 0
     )
     
-
+    
     def draw(self, context):
         
         layout = self.layout
@@ -110,15 +125,15 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         layout.prop(self, 'size')
         layout.prop(self, 'style')
         layout.prop(self, 'seed')
-        
+        #layout.operator(MESH_OT_tree_structure.bl_idname, text='Shape', icon='NODE')
 
             
     
-    def execute(self, context):
-        
+    def execute(self, context):        
         initiateLSystem(self,context)
+        
         return {'FINISHED'}
-
+        
 def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
@@ -134,13 +149,14 @@ def add_object_button(self, context):
 preview_collections = {}
 def register():
     
-    bpy.utils.register_class(OBJECT_OT_add_object)   
+    bpy.utils.register_class(OBJECT_OT_add_object)  
+    bpy.utils.register_class(MESH_OT_tree_structure) 
     bpy.types.VIEW3D_MT_add.append(add_object_button)
     #LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
-  
+    bpy.utils.unregister_class(MESH_OT_tree_structure) 
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
     #LSystem.unregister()

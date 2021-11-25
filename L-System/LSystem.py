@@ -12,6 +12,7 @@ class LSystem:
     bl_idname = "mesh.l_system"
     bl_label = "l_system"
     bl_options = {'REGISTER', 'UNDO'}
+    
     # Initialize L-System Class
     def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int):
         self.generation = generation
@@ -28,6 +29,8 @@ class LSystem:
             'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
             'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
             'system8': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': {33: 'F[+X]F[-X]+X', 33: 'F[-X]F[-X]+X', 34: 'F[-X]F+X'}}, 'stochastic': True}}
+        # Deselect every selected object in the scene
+        bpy.ops.object.select_all(action='DESELECT')
         # Set user's system of choice 
         self.selSystem = self.systems[system]
         # Set angle
@@ -37,10 +40,12 @@ class LSystem:
         # Create tree Structure
         self.tree, self.leaves = self.createTree()
         # Create tree skin and mesh
-        self.treeObj = self.shapeTree()
+        # Convert tree bmesh to mesh and add it as a object to the scene
+        self.treeObj = self.convertToMesh('Tree', self.tree)
+        self.shapeTree()
         # Add leaves to the tree
         self.addLeaves()
-
+        
     # Initialize system
     def initSystem(self) -> str:
         # Set the axiom as the first character of the L-System word
@@ -147,7 +152,8 @@ class LSystem:
         heading = Vector([0, 0, self.size])
         # Create rotation matrix
         rotationMat = Matrix()
-
+        # Is in Stack
+        inStack = False
         # Create a new bmesh for the tree structure
         bmTree = bmesh.new()
         # Create a new bmesh for leaf vertices
@@ -165,6 +171,9 @@ class LSystem:
                 bmesh.ops.translate(bmTree, vec = heading, verts = [vertex])
                 # Update center point to the latest vertex coordination
                 center = vertex.co
+                # if in stack add a leaf vertex
+                if inStack:
+                    leaf = bmesh.ops.create_vert(bmLeaf, co = center)['vert'][0]
 
             # Turn Left
             elif char == '+':
@@ -198,19 +207,25 @@ class LSystem:
 
             # Push current settings to stack
             elif char == '[':
+                # Set inStack True
+                inStack = True
                 # Push current vertex, heading vector, and center point to the stack
-                stack.append((vertex, (heading.x, heading.y, heading.z), center))
+                stack.append((vertex, (heading.x, heading.y, heading.z), center, inStack))
             
             # Pull previous settings from stack
             elif char == ']':
+                inStack = False
                 # create a vertex and the last vertex of the branch for leaf
-                leaf = bmesh.ops.create_vert(bmLeaf, co = center)['vert'][0]
+                #leaf = bmesh.ops.create_vert(bmLeaf, co = center)['vert'][0]
 
                 # Pull the previous vertex, heading vector, and center from the stack
-                vertex, tmpHeading, center = stack.pop()
+                vertex, tmpHeading, center, inStack = stack.pop()
 
                 # Update heading vector and create and new vector from pulled heading vector
                 heading = Vector(tmpHeading)
+       
+        # Remove double vertices from tree structure
+        bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
 
         return bmTree, bmLeaf
 
@@ -220,16 +235,11 @@ class LSystem:
         heading.rotate(Matrix.Rotation(self.angle * angleNegation, 3, rotationAxis))
         return heading
 
+    
     # Create skin around tree and clean up the tree structure
-    def shapeTree(self) -> Object:
-        # Deselect every selected object in the scene
-        bpy.ops.object.select_all(action='DESELECT')
-        # Set tree bmesh
-        bmTree = self.tree
-        # Remove double vertices from tree structure
-        bmesh.ops.remove_doubles(bmTree, verts = bmTree.verts, dist = 0.0001)
-        # Convert tree bmesh to mesh and add it as a object to the scene
-        treeObj = self.convertToMesh('Tree', bmTree)
+    def shapeTree(self) -> None:
+        print(self)
+        treeObj = self.treeObj
         # Select and make active
         bpy.context.view_layer.objects.active = treeObj
         # Select tree object
@@ -281,7 +291,7 @@ class LSystem:
             subdivision.subdivision_type = 'SIMPLE' # Subdivision type
         else: 
             subdivision.subdivision_type = 'CATMULL_CLARK' # Subdivision type
-        subdivision.levels = 2 # levels of viewport display
+        subdivision.levels = 1 # levels of viewport display
 
         """SMOOTH CORRECTIVE MODIFIER"""
         # Add smooth corrective modifier
@@ -305,8 +315,8 @@ class LSystem:
             bpy.ops.wm.append(filepath=filepath, directory=directory, filename='Materials.blend\Material\TreeBody')
         # Assign material to the tree object
         treeObj.data.materials.append(bpy.data.materials['TreeBody'])
-
-        return treeObj
+        self.treeObj = treeObj
+        #return treeObj
 
     def selSingleVert(self, object: Object, vertIndex: int) -> None:
         # Go to the object mode to select the given vertex
@@ -354,7 +364,7 @@ class LSystem:
         # Particle system settings
         particle.settings.type = 'HAIR' # Set particle system to hair
         particle.settings.use_advanced_hair = True # Use advanced settings for the particle system
-        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10) # Set the number of hairs base on the number of generations
+        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2) # Set the number of hairs base on the number of generations
         particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
         particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
         particle.settings.instance_object = bpy.data.objects['L'] # Set hair instance object to leaf object 
