@@ -47,7 +47,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     for i in range(1,9):
         partPath = 'Materials\System{}.png'.format(i)
         iconPath.append(join(installationPath, partPath))
-    print(iconPath)
+   
     for icon in iconPath:
         pcoll.load("System{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
     
@@ -59,9 +59,15 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
                 ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
                 ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
                 ('system8', 'System 8', 'System 8',pcoll['System8'].icon_id, 8)]
+    iconPath = []
+    for i in range(1,3):
+        partPath = 'Materials\Style{}.png'.format(i)
+        iconPath.append(join(installationPath, partPath))
+    for icon in iconPath:
+        pcoll.load("Style{}".format(iconPath.index(iconPath)+1), icon, 'IMAGE')
 
-    styles = [('STYLE1', 'Jagged', 'Jagged Mesh'),
-            ('STYLE2', 'Smooth', 'Smooth and organic')]
+    styles = [('STYLE1', 'Jagged', 'Jagged Mesh', pcoll['Style1'].icon_id, 1),
+            ('STYLE2', 'Smooth', 'Smooth and organic', pcoll['Style2'].icon_id, 2)]
 
     rule: prop.EnumProperty(
         items = ruleItems,

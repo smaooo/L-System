@@ -1,4 +1,3 @@
-
 import bpy
 from bpy.types import Object
 import bmesh
@@ -7,8 +6,6 @@ from math import radians, log, pow
 from mathutils import Matrix, Vector
 from os.path import dirname, abspath, join
 from random import choice, seed, shuffle, choices
-
-
 
 
 class LSystem:
@@ -30,8 +27,8 @@ class LSystem:
             'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}, 'stochastic': False},
             'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
             'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
-            'system8': {}}
-        # Set user's system of choice
+            'system8': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': {33: 'F[+X]F[-X]+X', 33: 'F[-X]F[-X]+X', 34: 'F[-X]F+X'}}, 'stochastic': True}}
+        # Set user's system of choice 
         self.selSystem = self.systems[system]
         # Set angle
         self.angle = radians(self.selSystem['angle'])
@@ -40,7 +37,7 @@ class LSystem:
         # Create tree Structure
         self.tree, self.leaves = self.createTree()
         # Create tree skin and mesh
-        self.shapeTree()
+        self.treeObj = self.shapeTree()
         # Add leaves to the tree
         self.addLeaves()
 
@@ -86,9 +83,15 @@ class LSystem:
         # If system is stochastic
         else:
             # Get Variables of the system
-            variables = list(self.selSystem['rule'].keys())[0]
+            system = self.selSystem['rule']
+            variables = list(system.keys())
+            stoVar = ''
+            for var in variables:
+                if len(system[var]) > 1:
+                    stoVar = var
+                    rules = system[var]
             # Get production rules of the system
-            rules = self.selSystem['rule'][list(self.selSystem['rule'])[0]]
+            #rules = self.selSystem['rule'][list(self.selSystem['rule'])[0]]
             # Create a list for distributing the rules based on the given chances
             stoRules = []
             # Create the distributed list
@@ -96,11 +99,20 @@ class LSystem:
                 tmpList = [rules[key] for i in range(key)]
                 stoRules += tmpList
             
-            if character in variables:
-                if character == variables:
-                    newstr = choice(stoRules)
-            else:
-                newstr = character
+            for i in range(len(variables)):
+                    
+                # if current character is one of the rules
+                if character in variables:
+                    # if current character is the rule character
+                    if character == variables[i]:
+                        if variables[i] == stoVar:
+                            # Change character using the production rule
+                            newstr = choice(stoRules)
+                        else:
+                            newstr = system[variables[i]]
+                else:
+                    newstr = character
+
         return newstr
 
     def rotationReplacer(self, word: str) -> str:
@@ -209,7 +221,9 @@ class LSystem:
         return heading
 
     # Create skin around tree and clean up the tree structure
-    def shapeTree(self) -> None:
+    def shapeTree(self) -> Object:
+        # Deselect every selected object in the scene
+        bpy.ops.object.select_all(action='DESELECT')
         # Set tree bmesh
         bmTree = self.tree
         # Remove double vertices from tree structure
@@ -292,6 +306,7 @@ class LSystem:
         # Assign material to the tree object
         treeObj.data.materials.append(bpy.data.materials['TreeBody'])
 
+        return treeObj
 
     def selSingleVert(self, object: Object, vertIndex: int) -> None:
         # Go to the object mode to select the given vertex
@@ -315,6 +330,12 @@ class LSystem:
         bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
         # Make leaves active sleection
         bpy.context.view_layer.objects.active = leavesObj
+
+        """ SHRINKWRAP MODIFIER"""
+        # Add Shrinkwrap modifier
+        shrink = leavesObj.modifiers.new(name='Shrinkwrap', type='SHRINKWRAP')
+        # Set the target object
+        shrink.target = self.treeObj
 
         """PARTICLE SYSTEM"""
         # If leaf object is not in the blend file
