@@ -25,18 +25,17 @@ from os.path import dirname, abspath, join
 from bpy.types import Operator
 import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper
-
 system = None
 
 
 def initiateLSystem(self, context):
     global system
-    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed, self.angle, self.thickness, self.leafSize, self.showShape, self.showLeaf)
+    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed, self.angle, self.thickness, self.leafSize, self.showShape, self.showLeaf, self.leafCount)
 
 
 def updateAngle(self,context):
     print(self.rule)    
-    ruleAngle = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6},
+    ruleDet = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6},
                 'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35},
                 'system3': {'angle': 22.5, 'thickness': 1, 'leafSize': 2},
                 'system4': {'angle': 20, 'thickness': 0.8, 'leafSize': 0.62},
@@ -44,7 +43,9 @@ def updateAngle(self,context):
                 'system6': {'angle': 22.5, 'thickness': 0.8, 'leafSize': 1},
                 'system7': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.46},
                 'system8': {'angle': 22.5, 'thickness': 1.4, 'leafSize': 1}}
-    self.angle = ruleAngle[self.rule]
+    self.angle = ruleDet[self.rule]['angle']
+    self.thickness = ruleDet[self.rule]['thickness']
+    self.leafSize = ruleDet[self.rule]['leafSize']
 
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
@@ -136,13 +137,20 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     thickness: prop.FloatProperty(
         name = 'Branch Thickness',
         description = 'Branch Thickness',
-        default = 0.5,
+        default = 0.6,
         min = 0.1
     )
     leafSize: prop.FloatProperty(
         name = 'Leaf Size',
         description = 'Leaves General Size',
-        default = 1, 
+        min = 0,
+        default = 0.63
+    )
+
+    leafCount: prop.IntProperty(
+        name = 'Leaves Count',
+        description = 'Leaves Count Multiplication',
+        default = 1,
         min = 0
     )
 
@@ -178,6 +186,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         box.label(text = 'Leaves', icon_value = self.pcoll['LeafIcon'].icon_id)
         box.prop(self, 'showLeaf')
         if self.showLeaf:
+            box.prop(self, 'leafCount')
             box.prop(self, 'leafSize')
         #layout.operator(MESH_OT_tree_structure.bl_idname, text='Shape', icon='NODE')
 

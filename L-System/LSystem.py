@@ -14,7 +14,7 @@ class LSystem:
     bl_options = {'REGISTER', 'UNDO'}
     
     # Initialize L-System Class
-    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int, angle: float, thickness: float, leafSize: float, showShape: bool, showLeaf: bool):
+    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int, angle: float, thickness: float, leafSize: float, showShape: bool, showLeaf: bool, leafCount: int):
         self.generation = generation
         self.system = system
         self.size = size
@@ -25,6 +25,7 @@ class LSystem:
         self.angle = radians(angle)
         self.showShape = showShape
         self.showLeaf = showLeaf
+        self.leafCount = leafCount
         # Set preset rules
         self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}, 'stochastic': False},
             'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}, 'stochastic': False},
@@ -385,7 +386,7 @@ class LSystem:
         # Particle system settings
         particle.settings.type = 'HAIR' # Set particle system to hair
         particle.settings.use_advanced_hair = True # Use advanced settings for the particle system
-        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2) # Set the number of hairs base on the number of generations
+        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2) * self.leafCount # Set the number of hairs base on the number of generations
         particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
         particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
         particle.settings.instance_object = bpy.data.objects['L'] # Set hair instance object to leaf object 
