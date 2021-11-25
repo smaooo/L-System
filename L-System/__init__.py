@@ -148,8 +148,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     )
 
     leafCount: prop.IntProperty(
-        name = 'Leaves Count',
-        description = 'Leaves Count Multiplication',
+        name = 'Leaf Count',
+        description = 'Leaf Count Multiplication',
         default = 1,
         min = 0
     )
