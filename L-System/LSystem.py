@@ -14,12 +14,17 @@ class LSystem:
     bl_options = {'REGISTER', 'UNDO'}
     
     # Initialize L-System Class
-    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int):
+    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int, angle: float, thickness: float, leafSize: float, showShape: bool, showLeaf: bool):
         self.generation = generation
         self.system = system
         self.size = size
         self.style = style
         self.randSeed = randSeed
+        self.thickness = thickness
+        self.leafSize = leafSize
+        self.angle = radians(angle)
+        self.showShape = showShape
+        self.showLeaf = showLeaf
         # Set preset rules
         self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}, 'stochastic': False},
             'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}, 'stochastic': False},
@@ -34,7 +39,7 @@ class LSystem:
         # Set user's system of choice 
         self.selSystem = self.systems[system]
         # Set angle
-        self.angle = radians(self.selSystem['angle'])
+        #self.angle = radians(self.selSystem['angle'])
         # Generate the word
         self.word = self.initSystem()
         # Create tree Structure
@@ -44,7 +49,8 @@ class LSystem:
         self.treeObj = self.convertToMesh('Tree', self.tree)
         self.shapeTree()
         # Add leaves to the tree
-        self.addLeaves()
+        if self.showLeaf:
+            self.addLeaves()
         
     # Initialize system
     def initSystem(self) -> str:
@@ -122,15 +128,25 @@ class LSystem:
 
     def rotationReplacer(self, word: str) -> str:
         rotators = ['/','\\','&','^']
-        shuffle(rotators)
-        newstr = ''
+        posRots = ['\\', '&']
+        negRots = ['/', '^']
+
+        #shuffle(rotators)
         seed(self.randSeed)
+        newstr = ''
         for i in range(0, len(word)):
+            """
             if word[i] == '+' or word[i] ==  '-':
                
                 c = choice(rotators)
                 newstr += c
-               
+            """
+            if word[i] == '+':
+                c = choice(posRots)
+                newstr += c
+            elif word[i] == '-':
+                c = choice(negRots)
+                newstr += c   
             else:
                 newstr += word[i]
 
@@ -144,8 +160,8 @@ class LSystem:
 
     def createTree(self) -> BMesh:
         
-        # Set center point position
-        center = [0,0,0]
+        # Set center point position based on the 3D cursor location
+        center = bpy.context.scene.cursor.location
         # Create stack for pushing / pulling
         stack = []
         # Create heading vector
@@ -238,70 +254,75 @@ class LSystem:
     
     # Create skin around tree and clean up the tree structure
     def shapeTree(self) -> None:
-        print(self)
         treeObj = self.treeObj
         # Select and make active
         bpy.context.view_layer.objects.active = treeObj
         # Select tree object
         treeObj.select_set(True)
-        
-        """ SKIN MODIFIER"""
-        # Add skin modifier to tree object
-        skin = treeObj.modifiers.new(name='Skin', type='SKIN')
-        # Set skin Modifier settings
-        skin.branch_smoothing = 1 # Branch smoothing
-        skin.use_x_symmetry = False # Disabling active symmetry
-        if self.style == 'STYLE2':
-            skin.use_smooth_shade = True
+        if self.showShape:
+           
+            """ SKIN MODIFIER"""
+            # Add skin modifier to tree object
+            skin = treeObj.modifiers.new(name='Skin', type='SKIN')
+            # Set skin Modifier settings
+            skin.branch_smoothing = 1 # Branch smoothing
+            skin.use_x_symmetry = False # Disabling active symmetry
+            if self.style == 'STYLE2':
+                skin.use_smooth_shade = True
+            # Activate auto smoothing for normals
             treeObj.data.use_auto_smooth = True
-        # Go to edit mode for modifying skin size around the tree
-        bpy.ops.object.mode_set(mode = 'EDIT')
-        # Deselect all vertices
-        bpy.ops.mesh.select_all(action = 'DESELECT')
-        # Select the firts and bottom vertex of tree object
-        self.selSingleVert(treeObj, 0)
-        # Scale skin size proportionally from bottom vertex
-        bpy.ops.transform.skin_resize(value = [(log(self.generation,3) * self.generation / 2) for i in range(3)],
-                                    orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
-                                    mirror=True,
-                                    use_proportional_edit=True, proportional_edit_falloff='ROOT',
-                                    proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation,
-                                    use_proportional_connected=False, use_proportional_projected=False)
-        # Select the top last vertex
-        self.selSingleVert(treeObj, -1)
-        # Scale skin size proportionally from top vertex
-        bpy.ops.transform.skin_resize(value = [log(self.generation,3) for i in range(3)],
-                                    orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', 
-                                    mirror=True, 
-                                    use_proportional_edit=True, proportional_edit_falloff='ROOT', 
-                                    proportional_size=log(self.generation,3)* 1000, use_proportional_connected=False, use_proportional_projected=False)
+            # Go to edit mode for modifying skin size around the tree
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            # Deselect all vertices
+            bpy.ops.mesh.select_all(action = 'DESELECT')
+            # Select the firts and bottom vertex of tree object
+            self.selSingleVert(treeObj, 0)
+            # Scale skin size proportionally from bottom vertex
+            bpy.ops.transform.skin_resize(value = [(log(self.generation  * self.thickness,3) * self.generation * self.size) for i in range(3)],
+                                        orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL',
+                                        mirror=True,
+                                        use_proportional_edit=True, proportional_edit_falloff='ROOT',
+                                        proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation * self.size * 2,
+                                        use_proportional_connected=False, use_proportional_projected=False)
+            # Select the top last vertex
+            self.selSingleVert(treeObj, -1)
+            # Scale skin size proportionally from top vertex
+            bpy.ops.transform.skin_resize(value = [(log(self.generation * self.thickness,3)* self.size ) for i in range(3)],
+                                        orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', 
+                                        mirror=True, 
+                                        use_proportional_edit=True, proportional_edit_falloff='ROOT', 
+                                        proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation * self.size * 2,
+                                        use_proportional_connected=False, use_proportional_projected=False)
 
-        """BEVEL MODIFIER (only for STYLE1)"""
-        if self.style == 'STYLE1':
-            # Add Bevel modifier
-            bevel = treeObj.modifiers.new(name = 'Bevel', type = 'BEVEL')
-            # Set bevel modifier settings
-            bevel.affect = 'VERTICES' # Bevel only affect of vertices and not edges
-            bevel.segments = 2 # Number of bevel segments
+            """BEVEL MODIFIER (only for STYLE1)"""
+            if self.style == 'STYLE1':
+                # Add Bevel modifier
+                bevel = treeObj.modifiers.new(name = 'Bevel', type = 'BEVEL')
+                # Set bevel modifier settings
+                bevel.affect = 'VERTICES' # Bevel only affect of vertices and not edges
+                bevel.segments = 2 # Number of bevel segments
 
-        """SUBDIVISION MODIFIER"""
-        subdivision = treeObj.modifiers.new(name='Subdivision', type='SUBSURF')
-        # Subdivision settings
-        if self.style == 'STYLE1':
-            subdivision.subdivision_type = 'SIMPLE' # Subdivision type
-        else: 
-            subdivision.subdivision_type = 'CATMULL_CLARK' # Subdivision type
-        subdivision.levels = 1 # levels of viewport display
+            """SUBDIVISION MODIFIER"""
+            subdivision = treeObj.modifiers.new(name='Subdivision', type='SUBSURF')
+            # Subdivision settings
+            if self.style == 'STYLE1':
+                subdivision.subdivision_type = 'SIMPLE' # Subdivision type
+            else: 
+                subdivision.subdivision_type = 'CATMULL_CLARK' # Subdivision type
+            subdivision.levels = 1 # levels of viewport display
 
-        """SMOOTH CORRECTIVE MODIFIER"""
-        # Add smooth corrective modifier
-        smoothCor = treeObj.modifiers.new(name = 'CorrectiveSmooth', type = 'CORRECTIVE_SMOOTH')
-        # Smooth corrective modifier settings
-        smoothCor.use_only_smooth = True # Use Only Smooth
-        smoothCor.use_pin_boundary = True # Use Pin Boundaries
+            """SMOOTH CORRECTIVE MODIFIER"""
+            # Add smooth corrective modifier
+            smoothCor = treeObj.modifiers.new(name = 'CorrectiveSmooth', type = 'CORRECTIVE_SMOOTH')
+            # Smooth corrective modifier settings
+            smoothCor.use_only_smooth = True # Use Only Smooth
+            smoothCor.use_pin_boundary = True # Use Pin Boundaries
 
-        # Go to the object mode
-        bpy.ops.object.mode_set(mode = 'OBJECT')
+            """WEIGHTED NORMAL MODIFIER"""
+            weighted = treeObj.modifiers.new(name = 'Weighted Normal', type= 'WEIGHTED_NORMAL')
+            # Go to the object mode
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+
 
         """ASSIGNING MATERIAL TO THE TREE OBJECT"""
         # If TreeBody material is not in the blend file
@@ -373,7 +394,7 @@ class LSystem:
         particle.settings.rotation_mode = 'NOR' # Set vertices normals as rotation mode for instance objects 
         particle.settings.rotation_factor_random = 1 # Set rotation randomization to maximum
         particle.settings.phase_factor_random = 0.690391 # Set rotation randomization phase
-        particle.settings.particle_size = log(6 * self.generation) / 10 # Set instance object scale based on the number of generations
+        particle.settings.particle_size = log(6 * self.generation) / 10 * self.leafSize # Set instance object scale based on the number of generations
         particle.settings.size_random = 1 # Set scale size randomization to maximum
         particle.settings.use_rotation_instance = True # Use instance object rotation
         

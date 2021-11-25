@@ -19,6 +19,7 @@ bl_info = {
 }
 
 
+from collections import defaultdict
 import bpy
 from os.path import dirname, abspath, join
 from bpy.types import Operator
@@ -30,17 +31,21 @@ system = None
 
 def initiateLSystem(self, context):
     global system
-    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed)
-def create_tree_shape():
-    global system
-    system.shapeTree()
-class MESH_OT_tree_structure(bpy.types.Operator):
-    bl_label = "Create Tree Structure"
-    bl_idname = "mesh.tree_structure"
-    global system
-    def execute(self, context):
-        create_tree_shape()
-        return {'FINISHED'}
+    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed, self.angle, self.thickness, self.leafSize, self.showShape, self.showLeaf)
+
+
+def updateAngle(self,context):
+    print(self.rule)    
+    ruleAngle = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6},
+                'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35},
+                'system3': {'angle': 22.5, 'thickness': 1, 'leafSize': 2},
+                'system4': {'angle': 20, 'thickness': 0.8, 'leafSize': 0.62},
+                'system5': {'angle': 25.7, 'thickness': 0.8, 'leafSize': 0.9},
+                'system6': {'angle': 22.5, 'thickness': 0.8, 'leafSize': 1},
+                'system7': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.46},
+                'system8': {'angle': 22.5, 'thickness': 1.4, 'leafSize': 1}}
+    self.angle = ruleAngle[self.rule]
+
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
     #pcoll = bpy.utils.previews.new()
@@ -61,7 +66,13 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
    
     for icon in iconPath:
         pcoll.load("System{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
-    
+    tmpPath = 'Materials\LeafIcon.png'
+    leafIcon = join(installationPath, tmpPath)
+    pcoll.load("LeafIcon", leafIcon, 'IMAGE')
+
+    tmpPath = join(installationPath, 'Materials\Icon.png')
+    pcoll.load("tree_icon", tmpPath, 'IMAGE')
+
     ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
                 ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
                 ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
@@ -70,6 +81,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
                 ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
                 ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
                 ('system8', 'System 8', 'System 8',pcoll['System8'].icon_id, 8)]
+
+    
     iconPath = []
     for i in range(1,3):
         partPath = 'Materials\Style{}.png'.format(i)
@@ -82,9 +95,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
 
     rule: prop.EnumProperty(
         items = ruleItems,
-        name = 'Rule'
+        name = 'System', update = updateAngle
     )
-
 
     genNum: prop.IntProperty(
         name='Generations',
@@ -94,8 +106,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     )
     
     size: prop.FloatProperty(
-        name = 'Size',
-        description = 'Size of the tree', 
+        name = 'Draw Length',
+        description = 'Distance between each vertex', 
         min = 0.1, 
         default = 0.5
     )
@@ -114,26 +126,68 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         min = 0
     )
     
-    
+    angle: prop.FloatProperty(
+        name = 'Angle',
+        description = 'Branch Rotation Angle',
+        min = -360, max = 360, default = 25.7
+    )
+
+
+    thickness: prop.FloatProperty(
+        name = 'Branch Thickness',
+        description = 'Branch Thickness',
+        default = 0.5,
+        min = 0.1
+    )
+    leafSize: prop.FloatProperty(
+        name = 'Leaf Size',
+        description = 'Leaves General Size',
+        default = 1, 
+        min = 0
+    )
+
+    showShape: prop.BoolProperty(
+        name = 'Show Mesh',
+        description = 'Toggle between the structure and the mesh',
+        default = False
+    )
+    showLeaf: prop.BoolProperty(
+        name= 'Show Leaves',
+        description = 'Show Leaves',
+        default = False
+    )
     def draw(self, context):
-        
+        #self.angle = self.ruleAngle[self.rule]
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout.prop(self, 'rule')
-        layout.prop(self, 'genNum')
-        layout.prop(self, 'size')
-        layout.prop(self, 'style')
-        layout.prop(self, 'seed')
+        box = layout.box()
+        box.label(text='L-System', icon_value = self.pcoll['tree_icon'].icon_id)
+        box.prop(self, 'rule')
+        box.prop(self, 'genNum')
+        box.prop (self, 'angle')
+        box.prop(self, 'seed')
+        box.prop(self, 'size')
+        box = layout.box()
+        box.label(text = 'Mesh', icon = 'MESH_DATA')
+        box.prop(self, 'showShape')
+        if self.showShape:
+            box.prop(self, 'thickness')
+            box.prop(self, 'style')
+        box = layout.box()
+        box.label(text = 'Leaves', icon_value = self.pcoll['LeafIcon'].icon_id)
+        box.prop(self, 'showLeaf')
+        if self.showLeaf:
+            box.prop(self, 'leafSize')
         #layout.operator(MESH_OT_tree_structure.bl_idname, text='Shape', icon='NODE')
 
-            
+    
     
     def execute(self, context):        
         initiateLSystem(self,context)
         
         return {'FINISHED'}
-        
+
 def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
@@ -150,13 +204,11 @@ preview_collections = {}
 def register():
     
     bpy.utils.register_class(OBJECT_OT_add_object)  
-    bpy.utils.register_class(MESH_OT_tree_structure) 
     bpy.types.VIEW3D_MT_add.append(add_object_button)
     #LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
-    bpy.utils.unregister_class(MESH_OT_tree_structure) 
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
     #LSystem.unregister()
