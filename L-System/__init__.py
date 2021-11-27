@@ -30,11 +30,14 @@ system = None
 
 def initiateLSystem(self, context):
     global system
-    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style, self.seed, self.angle, self.thickness, self.leafSize, self.showShape, self.showLeaf, self.leafCount)
+    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style,
+                            self.seed, self.angle, self.thickness, self.leafSize,
+                            self.showShape, self.showLeaf, self.leafCount, self.randomRotation,
+                            self.flat)
 
 
-def updateAngle(self,context):
-    print(self.rule)    
+def updateVariables(self,context):
+   
     ruleDet = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6},
                 'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35},
                 'system3': {'angle': 22.5, 'thickness': 1, 'leafSize': 2},
@@ -46,13 +49,26 @@ def updateAngle(self,context):
     self.angle = ruleDet[self.rule]['angle']
     self.thickness = ruleDet[self.rule]['thickness']
     self.leafSize = ruleDet[self.rule]['leafSize']
+    self.size = 0.5
+    self.flat = True
+    self.showShape = False
+    self.showLeaf = False
+
+def changeRotation(self, context):
+    if self.flat:
+        self.randomRotation = False
+    else:
+        self.randomRotation = True
+
+def updateLen(self, context):
+
+    if self.randomRotation:
+        self.size = 0.5
+    else: 
+        self.size = 0.25
 
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
-    
-    #pcoll = bpy.utils.previews.new()
-    #iconPath = '\Materials\Icon.png'
-    #pcoll.load("tree_icon", iconPath, 'IMAGE')
-    #icon = pcoll['tree_icon']
+
     """Create a new Tree"""
     bl_idname = "mesh.add_tree"
     bl_label = "Create Tree"
@@ -91,12 +107,18 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     for icon in iconPath:
         pcoll.load("Style{}".format(iconPath.index(icon)+1), icon, 'IMAGE')
 
+    tmpPath = join(installationPath, 'Materials\DD.png')
+    pcoll.load("DD", tmpPath, 'IMAGE')
+
+    tmpPath = join(installationPath, 'Materials\DDD.png')
+    pcoll.load("DDD", tmpPath, 'IMAGE')
+
     styles = [('STYLE1', 'Jagged', 'Jagged Mesh', pcoll['Style1'].icon_id, 1),
             ('STYLE2', 'Smooth', 'Smooth and organic', pcoll['Style2'].icon_id, 2)]
 
     rule: prop.EnumProperty(
         items = ruleItems,
-        name = 'System', update = updateAngle
+        name = 'System', update = updateVariables
     )
 
     genNum: prop.IntProperty(
@@ -164,6 +186,21 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         description = 'Show Leaves',
         default = False
     )
+
+    randomRotation: prop.BoolProperty(
+        name = 'Random Rotation',
+        description = 'Use random rotation for branches',
+        default = False,
+        update = updateLen
+    )
+
+    flat: prop.BoolProperty(
+        name = '2D / 3D', 
+        description = 'Toggle between 2D (Flat) mode and 3D mode.',
+        default = True,
+        update = changeRotation
+    )
+
     def draw(self, context):
         #self.angle = self.ruleAngle[self.rule]
         layout = self.layout
@@ -172,9 +209,18 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         box = layout.box()
         box.label(text='L-System', icon_value = self.pcoll['tree_icon'].icon_id)
         box.prop(self, 'rule')
+        if self.flat:
+            box.prop(self, 'flat', icon_value = self.pcoll['DDD'].icon_id, invert_checkbox = True)
+            
+        else:
+            box.prop(self, 'flat', icon_value = self.pcoll['DD'].icon_id)
+            
         box.prop(self, 'genNum')
         box.prop (self, 'angle')
-        box.prop(self, 'seed')
+        if self.flat == False:
+            box.prop(self, 'randomRotation')
+            if self.randomRotation:
+                box.prop(self, 'seed')
         box.prop(self, 'size')
         box = layout.box()
         box.label(text = 'Mesh', icon = 'MESH_DATA')
@@ -188,21 +234,31 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         if self.showLeaf:
             box.prop(self, 'leafCount')
             box.prop(self, 'leafSize')
-        #layout.operator(MESH_OT_tree_structure.bl_idname, text='Shape', icon='NODE')
 
-    
-    
-    def execute(self, context):        
+    def execute(self, context):     
+        print(self.layout.active)
         initiateLSystem(self,context)
         
         return {'FINISHED'}
+  
+'''
+class LSystem_OT_reset(bpy.types.Operator):
+    bl_idname = 'l_system.reset'
+    bl_options = {"INTERNAL"}
 
+    def execute(self, context): 
+        prefs = context.preferences.addons[__name__].preferences
+        props = prefs.__annotations__.keys()
+        for p in props:
+            prefs.property_unset(p)
+'''
 def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = join(installationPath, 'Materials\Icon.png')
     pcoll.load("tree_icon", iconPath, 'IMAGE')
     icon = pcoll['tree_icon']
+    
     self.layout.operator(
         OBJECT_OT_add_object.bl_idname,
         text="Tree",

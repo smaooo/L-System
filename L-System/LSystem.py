@@ -14,7 +14,10 @@ class LSystem:
     bl_options = {'REGISTER', 'UNDO'}
     
     # Initialize L-System Class
-    def __init__(self, system: str, generation: int, size: float, style: str, randSeed: int, angle: float, thickness: float, leafSize: float, showShape: bool, showLeaf: bool, leafCount: int):
+    def __init__(self, system: str, generation: int, size: float, style: str,
+                randSeed: int, angle: float, thickness: float, leafSize: float,
+                showShape: bool, showLeaf: bool, leafCount: int, random: bool,
+                flat: bool):
         self.generation = generation
         self.system = system
         self.size = size
@@ -26,13 +29,15 @@ class LSystem:
         self.showShape = showShape
         self.showLeaf = showLeaf
         self.leafCount = leafCount
+        self.random = random
+        self.flat = flat
         # Set preset rules
-        self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[+F]F[-F]F'}, 'stochastic': False},
-            'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[+F]F[-F][F]'}, 'stochastic': False},
-            'system3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF-[-F+F+F]+[+F-F-F]'}, 'stochastic': False},
-            'system4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[+X]F[-X]+X'}, 'stochastic': False},
-            'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[+X][-X]FX'}, 'stochastic': False},
-            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
+        self.systems = {'system1': {'axiom': 'F', 'angle': 25.7, 'rule':{'F':'F[&F]F[^F]F[\F]F[/F]F'}, 'random':{'F':'F[+F]F[-F]F'},'stochastic': False},
+            'system2': {'axiom': 'F', 'angle': 20, 'rule': {'F':'F[&F]F[^F]F[\F]F[/F][F]'}, 'random': {'F':'F[+F]F[-F][F]'}, 'stochastic': False},
+            'system3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF^[^F&F&F]&[&F^F^F]/[/F\F\F]\[\F/F/F]'}, 'random':{'F': 'FF-[-F+F+F]+[+F-F-F]'}, 'stochastic': False},
+            'system4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[&X]F[^X]F[\X]F[/X]&X'}, 'random': {'F': 'FF', 'X': 'F[+X]F[-X]+X'},'stochastic': False},
+            'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[&X][^X][\X][/F]FX'}, 'random': {'F': 'FF', 'X': 'F[+X][-X]FX'}, 'stochastic': False},
+            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F^[[X]\+X]&&[[X]/-X]^F[/+FX]^X'}, 'random': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
             'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
             'system8': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': {33: 'F[+X]F[-X]+X', 33: 'F[-X]F[-X]+X', 34: 'F[-X]F+X'}}, 'stochastic': True}}
         # Deselect every selected object in the scene
@@ -40,7 +45,6 @@ class LSystem:
         # Set user's system of choice 
         self.selSystem = self.systems[system]
         # Set angle
-        #self.angle = radians(self.selSystem['angle'])
         # Generate the word
         self.word = self.initSystem()
         # Create tree Structure
@@ -79,7 +83,11 @@ class LSystem:
         # If system is not stochastic
         if self.selSystem['stochastic'] is not True:
             # Get the variables and production rules dictionary
-            rules = self.selSystem['rule']
+            if self.random or self.flat:
+                rules = self.selSystem['random']
+            else:
+                rules = self.selSystem['rule']
+            
             # Variables are the keys of the dictionary
             variables = list(rules.keys())
             # For the number of production rules
@@ -95,7 +103,10 @@ class LSystem:
         # If system is stochastic
         else:
             # Get Variables of the system
-            system = self.selSystem['rule']
+            if self.random or self.flat:
+                system = self.selSystem['random']
+            else:
+                system = self.selSystem['rule']
             variables = list(system.keys())
             stoVar = ''
             for var in variables:
@@ -128,30 +139,38 @@ class LSystem:
         return newstr
 
     def rotationReplacer(self, word: str) -> str:
-        rotators = ['/','\\','&','^']
-        posRots = ['\\', '&']
-        negRots = ['/', '^']
+        if self.random:
+            rotators = ['/','\\','&','^']
+            posRots = ['\\', '&']
+            negRots = ['/', '^']
 
-        #shuffle(rotators)
-        seed(self.randSeed)
-        newstr = ''
-        for i in range(0, len(word)):
-            """
-            if word[i] == '+' or word[i] ==  '-':
+            #shuffle(rotators)
+            seed(self.randSeed)
+            newstr = ''
+            for i in range(0, len(word)):
                
-                c = choice(rotators)
-                newstr += c
-            """
-            if word[i] == '+':
-                c = choice(posRots)
-                newstr += c
-            elif word[i] == '-':
-                c = choice(negRots)
-                newstr += c   
-            else:
-                newstr += word[i]
+                if word[i] == '+':
+                    c = choice(posRots)
+                    newstr += c
+                elif word[i] == '-':
+                    c = choice(negRots)
+                    newstr += c   
+                else:
+                    newstr += word[i]
 
-        return newstr
+            return newstr
+        elif self.flat:
+            newstr = ''
+            for i in range(0, len(word)):
+                if word[i] == '+':
+                    newstr += '&'
+                elif word[i] == '-':
+                    newstr += '^'
+                else:
+                    newstr += word[i]
+            return newstr
+        else:
+            return word
 
     def wordCleaner(self, word: str) -> str:
         word = word.replace('X', '')
@@ -195,32 +214,32 @@ class LSystem:
             # Turn Left
             elif char == '+':
                 # Rotate heading Vector (angle) radians around Z and update it
-                heading = self.rotateHeading(heading, 1, 'Z')
+                heading = self.rotateHeading(heading, -1, 'Z')
             
             # Turn Right
             elif char == '-':
                 # Rotate heading Vector (-angle) radians around Z and update it
-                heading = self.rotateHeading(heading, -1, 'Z')
+                heading = self.rotateHeading(heading, 1, 'Z')
 
             # Pitch Down
             elif char == '&':
                 # Rotate heading Vector (angle) radians around Y and update it
-                heading = self.rotateHeading(heading, 1, 'Y')
+                heading = self.rotateHeading(heading, -1, 'Y')
 
             # Pitch Up
             elif char == '^':
                 # Rotate heading Vector (-angle) radians around Y and update it
-                heading = self.rotateHeading(heading, -1, 'Y')
+                heading = self.rotateHeading(heading, 1, 'Y')
             
             # Roll Left (\)
             elif char == '\\':
                 # Rotate heading Vector (angle) radians around X and update it
-                heading = self.rotateHeading(heading, 1, 'X')
+                heading = self.rotateHeading(heading, -1, 'X')
             
             # Roll Right
             elif char == '/':
                 # Rotate heading Vector (-angle) radians around X and update it
-                heading = self.rotateHeading(heading, -1, 'X')
+                heading = self.rotateHeading(heading, 1, 'X')
 
             # Push current settings to stack
             elif char == '[':
@@ -371,7 +390,7 @@ class LSystem:
 
         """PARTICLE SYSTEM"""
         # If leaf object is not in the blend file
-        if 'L' not in bpy.data.objects.keys():
+        if 'L' not in bpy.data.objects.keys() or 'L2D' not in bpy.data.objects.keys():
             # Set filepath for leaf object blend file
             installationPath = dirname(abspath(__file__))
             filepath = join(installationPath, 'Materials\Materials.blend')
@@ -389,12 +408,18 @@ class LSystem:
         particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2) * self.leafCount # Set the number of hairs base on the number of generations
         particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
         particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
-        particle.settings.instance_object = bpy.data.objects['L'] # Set hair instance object to leaf object 
         particle.settings.use_emit_random = False # Don't use random order for instance object
         particle.settings.use_rotations = True # Use Rotation for instance objects
         particle.settings.rotation_mode = 'NOR' # Set vertices normals as rotation mode for instance objects 
-        particle.settings.rotation_factor_random = 1 # Set rotation randomization to maximum
-        particle.settings.phase_factor_random = 0.690391 # Set rotation randomization phase
+        if self.flat:
+            particle.settings.instance_object = bpy.data.objects['L2D'] # Set hair intance object to leaf 2d
+            particle.settings.rotation_factor_random = 0 # Set rotaiton randomness to 0
+            particle.settings.phase_factor = -0.246575 # Set rotation phase factor
+            particle.settings.phase_factor_random = 0 # Set rotation randomness phase factor to 0
+        else:
+            particle.settings.instance_object = bpy.data.objects['L'] # Set hair instance object to leaf object 
+            particle.settings.rotation_factor_random = 1 # Set rotation randomization to maximum
+            particle.settings.phase_factor_random = 0.690391 # Set rotation randomization phase
         particle.settings.particle_size = log(6 * self.generation) / 10 * self.leafSize # Set instance object scale based on the number of generations
         particle.settings.size_random = 1 # Set scale size randomization to maximum
         particle.settings.use_rotation_instance = True # Use instance object rotation
