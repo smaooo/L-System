@@ -37,9 +37,9 @@ class LSystem:
             'system3': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': 'FF^[^F&F&F]&[&F^F^F]/[/F\F\F]\[\F/F/F]'}, 'random':{'F': 'FF-[-F+F+F]+[+F-F-F]'}, 'stochastic': False},
             'system4': {'axiom': 'X', 'angle': 20, 'rule': {'F': 'FF', 'X': 'F[&X]F[^X]F[\X]F[/X]&X'}, 'random': {'F': 'FF', 'X': 'F[+X]F[-X]+X'},'stochastic': False},
             'system5': {'axiom': 'X', 'angle': 25.7, 'rule': {'F': 'FF', 'X': 'F[&X][^X][\X][/F]FX'}, 'random': {'F': 'FF', 'X': 'F[+X][-X]FX'}, 'stochastic': False},
-            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F^[[X]\+X]&&[[X]/-X]^F[/+FX]^X'}, 'random': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
-            'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
-            'system8': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': {33: 'F[+X]F[-X]+X', 33: 'F[-X]F[-X]+X', 34: 'F[-X]F+X'}}, 'stochastic': True}}
+            'system6': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': 'F^[[X]\X]&F[\FX]^X'}, 'random': {'F': 'FF', 'X': 'F-[[X]+X]+F[+FX]-X'}, 'stochastic': False},
+            'system7': {'axiom': 'F', 'angle': 22.5, 'rule': {'F': {33:'F[&F][^F][/F][\F]F', 33: 'F[^F][/F]', 34:'F[&F][\F]F'}}, 'random': {'F': {33:'F[+F][-F]F', 33: 'F[-F]F', 34:'F[+F]F'}}, 'stochastic': True},
+            'system8': {'axiom': 'X', 'angle': 22.5, 'rule': {'F': 'FF', 'X': {33: 'F[&X]F[^X]F[\F]F[/]&X', 33: 'F[^X][/X]F[^X][/X]&X', 34: 'F[^X][/X]F&X'}}, 'random': {'F': 'FF', 'X': {33: 'F[+X]F[-X]+X', 33: 'F[-X]F[-X]+X', 34: 'F[-X]F+X'}}, 'stochastic': True}}
         # Deselect every selected object in the scene
         bpy.ops.object.select_all(action='DESELECT')
         # Set user's system of choice 

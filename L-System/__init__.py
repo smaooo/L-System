@@ -57,6 +57,7 @@ def updateVariables(self,context):
 def changeRotation(self, context):
     if self.flat:
         self.randomRotation = False
+        
     else:
         self.randomRotation = True
 
@@ -66,9 +67,12 @@ def updateLen(self, context):
         self.size = 0.5
     else: 
         self.size = 0.25
-
+def setToFalse(self, context):
+    if self.exeSto:
+        self.exeSto = False
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
-
+ 
+        
     """Create a new Tree"""
     bl_idname = "mesh.add_tree"
     bl_label = "Create Tree"
@@ -200,6 +204,13 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         default = True,
         update = changeRotation
     )
+    
+    exeSto: prop.BoolProperty(
+        name = 'Regenerate',
+        description = "Regenrate stochastic system",
+        default = False,
+        update = setToFalse
+    )
 
     def draw(self, context):
         #self.angle = self.ruleAngle[self.rule]
@@ -222,6 +233,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             if self.randomRotation:
                 box.prop(self, 'seed')
         box.prop(self, 'size')
+        if self.rule == 'system7' or self.rule == 'system8':
+            box.prop(self, 'exeSto', icon = 'MOD_REMESH')
         box = layout.box()
         box.label(text = 'Mesh', icon = 'MESH_DATA')
         box.prop(self, 'showShape')
@@ -236,7 +249,6 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             box.prop(self, 'leafSize')
 
     def execute(self, context):     
-        print(self.layout.active)
         initiateLSystem(self,context)
         
         return {'FINISHED'}
