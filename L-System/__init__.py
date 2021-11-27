@@ -25,8 +25,10 @@ from os.path import dirname, abspath, join
 from bpy.types import Operator
 import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper
-system = None
+import textwrap
 
+system = None
+warningMessage = ''
 
 def initiateLSystem(self, context):
     global system
@@ -67,9 +69,41 @@ def updateLen(self, context):
         self.size = 0.5
     else: 
         self.size = 0.25
+
 def setToFalse(self, context):
     if self.exeSto:
         self.exeSto = False
+
+def checkRule(self, context):
+    global warningMessage
+    rules = {'system1': [5,5,4],
+            'system2': [5,5,4],
+            'system3': [4,4,3],
+            'system4': [7,7,5],
+            'system5': [8,7,5],
+            'system6': [6,6,6],
+            'system7': [8,8,7],
+            'system8': [8,8,6]}
+    genRules = rules[self.rule]
+    ruleIndex = list(rules.keys()).index(self.rule) + 1
+    warning = '''System {} will process the tree generation really slowly after the {}th generation. Therefore, it is possible that Blender stall for a long time based on your device specification.'''
+    if self.flat:
+        if self.genNum > genRules[0]:
+            warningMessage =  warning.format(str(ruleIndex), str(genRules[0]))
+            bpy.ops.wm.warning("INVOKE_DEFAULT")
+    else:
+        if self.randomRotation:
+            if self.genNum > genRules[1]:
+                warningMessage = warning.format(str(ruleIndex), str(genRules[1]))
+                bpy.ops.wm.warning("INVOKE_DEFAULT")
+        else:
+            if self.genNum > genRules[2]:
+                warningMessage = warning.format(str(ruleIndex), str(genRules[2]))
+                bpy.ops.wm.warning("INVOKE_DEFAULT")
+
+
+
+   
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
  
         
@@ -129,7 +163,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         name='Generations',
         description = 'Number of Generations',
         default = 3,
-        min = 1, max = 10
+        min = 1, max = 10,
+        update = checkRule
     )
     
     size: prop.FloatProperty(
@@ -234,8 +269,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             box.prop(self, 'flat', icon_value = self.pcoll['DD'].icon_id)
             
         box.prop(self, 'genNum')
-        if self.genNum > 3:
-            layout.alert = True
+        
         box.prop (self, 'angle')
         if self.flat == False:
             box.prop(self, 'randomRotation')
@@ -267,18 +301,32 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             initiateLSystem(self,context)
         
         return {'FINISHED'}
-  
-'''
-class LSystem_OT_reset(bpy.types.Operator):
-    bl_idname = 'l_system.reset'
-    bl_options = {"INTERNAL"}
 
-    def execute(self, context): 
-        prefs = context.preferences.addons[__name__].preferences
-        props = prefs.__annotations__.keys()
-        for p in props:
-            prefs.property_unset(p)
-'''
+def printText(context, parent):
+    global warningMessage
+    chars = int(context.region.width / 7) 
+    wrapper = textwrap.wrap(text = warningMessage, width = context.region.width / 6)
+    #lines = wrapper.wrap(text=warningMessage)
+    for line in wrapper:
+        parent.label(text = line)
+class WM_OT_warning(Operator):
+    bl_idname = 'wm.warning'
+    bl_label = "WARNING"
+    
+    def draw(self, context):
+        layout = self.layout
+        box = layout.box()
+        printText(context, box)
+    def execute(self, context):
+        print('executed')
+        return {"FINISHED"}
+    def cancel(self, context):
+        print('canceled')
+        return None
+    def invoke(self,context,event):
+        print('invoked')
+        return context.window_manager.invoke_props_dialog(self)
+
 def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
@@ -296,11 +344,13 @@ preview_collections = {}
 def register():
     
     bpy.utils.register_class(OBJECT_OT_add_object)  
+    bpy.utils.register_class(WM_OT_warning)
     bpy.types.VIEW3D_MT_add.append(add_object_button)
     #LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
+    bpy.uyils.unregister_class(WM_OT_warning)
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
     #LSystem.unregister()
