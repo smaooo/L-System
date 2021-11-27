@@ -234,6 +234,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             box.prop(self, 'flat', icon_value = self.pcoll['DD'].icon_id)
             
         box.prop(self, 'genNum')
+        if self.genNum > 3:
+            layout.alert = True
         box.prop (self, 'angle')
         if self.flat == False:
             box.prop(self, 'randomRotation')
