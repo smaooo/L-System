@@ -205,13 +205,18 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         update = changeRotation
     )
     
-    exeSto: prop.BoolProperty(
+    generate: prop.BoolProperty(
         name = 'Regenerate',
         description = "Regenrate stochastic system",
-        default = False,
-        update = setToFalse
+        default = False
     )
 
+    realTime: prop.BoolProperty(
+        name= 'Real-time',
+        description = 'Update L-System constantly with every change.',
+        default = False,
+
+    )
     def draw(self, context):
         #self.angle = self.ruleAngle[self.rule]
         layout = self.layout
@@ -233,8 +238,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             if self.randomRotation:
                 box.prop(self, 'seed')
         box.prop(self, 'size')
-        if self.rule == 'system7' or self.rule == 'system8':
-            box.prop(self, 'exeSto', icon = 'MOD_REMESH')
+        if self.realTime == False:
+            box.prop(self, 'generate', icon = 'MOD_REMESH')
         box = layout.box()
         box.label(text = 'Mesh', icon = 'MESH_DATA')
         box.prop(self, 'showShape')
@@ -249,7 +254,9 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             box.prop(self, 'leafSize')
 
     def execute(self, context):     
-        initiateLSystem(self,context)
+        if self.realTime or self.generate:
+            self.generate = False
+            initiateLSystem(self,context)
         
         return {'FINISHED'}
   
