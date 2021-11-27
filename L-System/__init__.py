@@ -22,13 +22,15 @@ bl_info = {
 from collections import defaultdict
 import bpy
 from os.path import dirname, abspath, join
-from bpy.types import Operator
+from bpy.types import Operator, PropertyGroup
 import bpy.props as prop
 from bpy_extras.object_utils import AddObjectHelper
 import textwrap
 
 system = None
 warningMessage = ''
+called = False
+treeSelf = None
 
 def initiateLSystem(self, context):
     global system
@@ -75,7 +77,11 @@ def setToFalse(self, context):
         self.exeSto = False
 
 def checkRule(self, context):
+    global called
+    called = True
     global warningMessage
+    global treeSelf
+    treeSelf = self
     rules = {'system1': [5,5,4],
             'system2': [5,5,4],
             'system3': [4,4,3],
@@ -91,20 +97,20 @@ def checkRule(self, context):
         if self.genNum > genRules[0]:
             warningMessage =  warning.format(str(ruleIndex), str(genRules[0]))
             bpy.ops.wm.warning("INVOKE_DEFAULT")
+       
     else:
         if self.randomRotation:
             if self.genNum > genRules[1]:
                 warningMessage = warning.format(str(ruleIndex), str(genRules[1]))
                 bpy.ops.wm.warning("INVOKE_DEFAULT")
+          
         else:
             if self.genNum > genRules[2]:
                 warningMessage = warning.format(str(ruleIndex), str(genRules[2]))
                 bpy.ops.wm.warning("INVOKE_DEFAULT")
+    called = False
 
-
-
-   
-class OBJECT_OT_add_object(Operator, AddObjectHelper):
+class OBJECT_OT_add_object(Operator, AddObjectHelper, PropertyGroup):
  
         
     """Create a new Tree"""
@@ -250,13 +256,14 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         name= 'Real-time',
         description = 'Update L-System constantly with every change.',
         default = False,
-
+    )
+  
+    prevNum: prop.IntProperty(
+        name = 'prevNum'
     )
     def draw(self, context):
-        #self.angle = self.ruleAngle[self.rule]
         layout = self.layout
         layout.use_property_split = True
-        #layout.use_property_decorate = False
         box = layout.box()
         box.label(text='L-System', icon_value = self.pcoll['tree_icon'].icon_id)
         row = box.row(heading = 'Real-time')
@@ -268,8 +275,9 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         else:
             box.prop(self, 'flat', icon_value = self.pcoll['DD'].icon_id)
             
-        box.prop(self, 'genNum')
         
+        box.prop(self, 'genNum')
+     
         box.prop (self, 'angle')
         if self.flat == False:
             box.prop(self, 'randomRotation')
@@ -295,12 +303,17 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             row = layout.row(align=True)
             row.prop(self, 'generate', icon = 'MOD_REMESH', expand = True)
 
-    def execute(self, context):     
-        if self.realTime or self.generate:
-            self.generate = False
-            initiateLSystem(self,context)
+    def execute(self, context):  
+           
         
-        return {'FINISHED'}
+        if called == False:
+            if self.realTime or self.generate:
+                self.generate = False
+                initiateLSystem(self,context)
+            return {"FINISHED"}
+        else:
+            return {"PASS_THROUGH"}
+ 
 
 def printText(context, parent):
     global warningMessage
@@ -309,22 +322,26 @@ def printText(context, parent):
     #lines = wrapper.wrap(text=warningMessage)
     for line in wrapper:
         parent.label(text = line)
-class WM_OT_warning(Operator):
+class WM_OT_warning(Operator, PropertyGroup):
     bl_idname = 'wm.warning'
     bl_label = "WARNING"
-    
     def draw(self, context):
         layout = self.layout
         box = layout.box()
         printText(context, box)
+        
     def execute(self, context):
-        print('executed')
+        #global treeSelf
+        #treeSelf.genNum += 1
+
         return {"FINISHED"}
     def cancel(self, context):
-        print('canceled')
+
+        global treeSelf
+        treeSelf.genNum -=1
+        
         return None
     def invoke(self,context,event):
-        print('invoked')
         return context.window_manager.invoke_props_dialog(self)
 
 def add_object_button(self, context):
