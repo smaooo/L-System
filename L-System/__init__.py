@@ -206,7 +206,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     )
     
     generate: prop.BoolProperty(
-        name = 'Regenerate',
+        name = '(Re)Generate',
         description = "Regenrate stochastic system",
         default = False
     )
@@ -221,9 +221,11 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         #self.angle = self.ruleAngle[self.rule]
         layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False
+        #layout.use_property_decorate = False
         box = layout.box()
         box.label(text='L-System', icon_value = self.pcoll['tree_icon'].icon_id)
+        row = box.row(heading = 'Real-time')
+        row.prop(self, 'realTime', text = '')
         box.prop(self, 'rule')
         if self.flat:
             box.prop(self, 'flat', icon_value = self.pcoll['DDD'].icon_id, invert_checkbox = True)
@@ -238,20 +240,24 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             if self.randomRotation:
                 box.prop(self, 'seed')
         box.prop(self, 'size')
-        if self.realTime == False:
-            box.prop(self, 'generate', icon = 'MOD_REMESH')
+        
         box = layout.box()
         box.label(text = 'Mesh', icon = 'MESH_DATA')
-        box.prop(self, 'showShape')
+        row = box.row(heading='Show Mesh')
+        row.prop(self, 'showShape', text = '')
         if self.showShape:
             box.prop(self, 'thickness')
             box.prop(self, 'style')
         box = layout.box()
         box.label(text = 'Leaves', icon_value = self.pcoll['LeafIcon'].icon_id)
-        box.prop(self, 'showLeaf')
+        row = box.row(heading = 'Show Leaves')
+        row.prop(self, 'showLeaf', text='')
         if self.showLeaf:
             box.prop(self, 'leafCount')
             box.prop(self, 'leafSize')
+        if self.realTime == False:
+            row = layout.row(align=True)
+            row.prop(self, 'generate', icon = 'MOD_REMESH', expand = True)
 
     def execute(self, context):     
         if self.realTime or self.generate:
