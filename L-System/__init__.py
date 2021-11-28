@@ -41,17 +41,18 @@ def initiateLSystem(self, context):
 
 def updateVariables(self,context):
    
-    ruleDet = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6},
-                'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35},
-                'system3': {'angle': 22.5, 'thickness': 1, 'leafSize': 2},
-                'system4': {'angle': 20, 'thickness': 0.8, 'leafSize': 0.62},
-                'system5': {'angle': 25.7, 'thickness': 0.8, 'leafSize': 0.9},
-                'system6': {'angle': 22.5, 'thickness': 0.8, 'leafSize': 1},
-                'system7': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.46},
-                'system8': {'angle': 22.5, 'thickness': 1.4, 'leafSize': 1}}
+    ruleDet = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6, 'leafCount': 5},
+                'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35, 'leafCount': 5},
+                'system3': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.3, 'leafCount': 200},
+                'system4': {'angle': 20, 'thickness': 0.8, 'leafSize': 0.62, 'leafCount': 5}, 
+                'system5': {'angle': 25.7, 'thickness': 0.8, 'leafSize': 0.5, 'leafCount': 5},
+                'system6': {'angle': 22.5, 'thickness': 0.7, 'leafSize': 0.43, 'leafCount': 3},
+                'system7': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.15, 'leafCount': 2},
+                'system8': {'angle': 22.5, 'thickness': 0.5, 'leafSize': 0.26, 'leafCount': 5}}
     self.angle = ruleDet[self.rule]['angle']
     self.thickness = ruleDet[self.rule]['thickness']
     self.leafSize = ruleDet[self.rule]['leafSize']
+    self.leafCount = ruleDet[self.rule]['leafCount']
     self.size = 0.5
     self.flat = True
     self.showShape = False
@@ -219,7 +220,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         default = 0.63
     )
 
-    leafCount: prop.IntProperty(
+    leafCount: prop.FloatProperty(
         name = 'Leaf Count',
         description = 'Leaf Count Multiplication',
         default = 1,

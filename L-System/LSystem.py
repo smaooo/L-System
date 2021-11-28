@@ -43,7 +43,7 @@ class LSystem:
         # Deselect every selected object in the scene
         bpy.ops.object.select_all(action='DESELECT')
         # Set user's system of choice 
-        self.selSystem = self.systems[system]
+        self.selSystem = self.systems[self.system]
         # Set angle
         # Generate the word
         self.word = self.initSystem()
@@ -307,13 +307,14 @@ class LSystem:
             # Select the top last vertex
             self.selSingleVert(treeObj, -1)
             # Scale skin size proportionally from top vertex
-            bpy.ops.transform.skin_resize(value = [(log(self.generation * self.thickness,3)* self.size ) for i in range(3)],
+            bpy.ops.transform.skin_resize(value = [(log(self.generation * self.thickness,3)* self.size * (0.064193 if self.system == 'system3' else 1) ) for i in range(3)],
                                         orient_type='GLOBAL', orient_matrix=((1, 0, 0), (0, 1, 0), (0, 0, 1)), orient_matrix_type='GLOBAL', 
                                         mirror=True, 
                                         use_proportional_edit=True, proportional_edit_falloff='ROOT', 
-                                        proportional_size=log(self.generation,3)* log(self.generation, 2) * self.generation * self.size * 2,
+                                        proportional_size=log(self.generation,3) * self.generation * self.size * 5 * (3.5 if self.system == 'system3' else 1),
                                         use_proportional_connected=False, use_proportional_projected=False)
 
+            
             """BEVEL MODIFIER (only for STYLE1)"""
             if self.style == 'STYLE1':
                 # Add Bevel modifier
@@ -405,7 +406,8 @@ class LSystem:
         # Particle system settings
         particle.settings.type = 'HAIR' # Set particle system to hair
         particle.settings.use_advanced_hair = True # Use advanced settings for the particle system
-        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2) * self.leafCount # Set the number of hairs base on the number of generations
+        particle.settings.count = int(pow(1000, log(self.generation,3)) / 10 * self.size * 2 * self.leafCount * (10 
+                                if (self.system == 'system1' or self.system == 'system2') and self.random == False else 1)) # Set the number of hairs base on the number of generations
         particle.settings.emit_from = 'VERT' # Set vertices as hair emit location
         particle.settings.render_type = 'OBJECT' # Set particle system to render hairs as a specific object
         particle.settings.use_emit_random = False # Don't use random order for instance object
