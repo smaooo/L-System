@@ -29,14 +29,8 @@ import textwrap
 
 system = None
 warningMessage = ''
-#treeSelf = None
-
-def initiateLSystem(self, context):
-    global system
-    system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style,
-                            self.seed, self.angle, self.thickness, self.leafSize,
-                            self.showShape, self.showLeaf, self.leafCount, self.randomRotation,
-                            self.flat)
+actions = {}
+treeSelf = None
 
 
 def updateVariables(self,context):
@@ -85,43 +79,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO'}
 
     
-    def checkRule(self, context):
-        #self.allowExec = False
-        global warningMessage
-        #global treeSelf
-        #treeSelf = self
-        rules = {'system1': [5,5,4],
-                'system2': [5,5,4],
-                'system3': [4,4,3],
-                'system4': [7,7,5],
-                'system5': [8,7,5],
-                'system6': [6,6,6],
-                'system7': [8,8,7],
-                'system8': [8,8,6]}
-        genRules = rules[self.rule]
-        ruleIndex = list(rules.keys()).index(self.rule) + 1
-        warning = '''System {} will process the tree generation really slowly after the {}th generation. Therefore, it is possible that Blender stall for a long time based on your device specification.'''
-        if self.flat:
-            if self.genNum > genRules[0]:
-                warningMessage =  warning.format(str(ruleIndex), str(genRules[0]))
-                return bpy.ops.wm.warning("INVOKE_DEFAULT")
-            #else:
-            #    self.allowExec = True
-        
-        else:
-            if self.randomRotation:
-                if self.genNum > genRules[1]:
-                    warningMessage = warning.format(str(ruleIndex), str(genRules[1]))
-                    return bpy.ops.wm.warning("INVOKE_DEFAULT")
-                #else:
-                #    self.allowExec = True
-            else:
-                if self.genNum > genRules[2]:
-                    warningMessage = warning.format(str(ruleIndex), str(genRules[2]))
-                    return bpy.ops.wm.warning("INVOKE_DEFAULT")
-                #else:
-                #    self.allowExec = True
-
+    
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = []
@@ -174,8 +132,8 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         name='Generations',
         description = 'Number of Generations',
         default = 3,
-        min = 1, max = 10,
-        update = checkRule
+        min = 1, max = 10 #,
+        #update = checkRule
     )
     
     size: prop.FloatProperty(
@@ -313,14 +271,31 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             row.prop(self, 'generate', icon = 'MOD_REMESH', expand = True)
 
     def execute(self, context):  
+        global actions
+        actions = {'system': self.rule, 'gen': self.genNum, 'size': self.size, 'style': self.style,
+                'seed': self.seed, 'angle': self.angle, 'thick': self.thickness, 'leafSize': self.leafSize,
+                'showShape': self.showShape, 'showLeaf': self.showLeaf, 'leafCount': self.leafCount, 'random': self.randomRotation,
+                'flat': self.flat}
 
         if self.realTime or self.generate or self.regenerate:
             self.regenerate = False
             self.generate = False
-            initiateLSystem(self,context)
+            global treeSelf
+            treeSelf = self
+            bpy.ops.wm.warning('INVOKE_DEFAULT')
+            #initiateLSystem(self,context)
         
         return {"FINISHED"}
-    
+
+def initiateLSystem():
+    global system
+    global actions
+    system = LSystem.LSystem(actions['system'], actions['gen'], actions['size'], actions['style'],
+                            actions['seed'], actions['angle'], actions['thick'], actions['leafSize'],
+                            actions['showShape'], actions['showLeaf'], actions['leafCount'], actions['random'],
+                            actions['flat'])
+
+   
 def printText(context, parent):
     global warningMessage
     chars = int(context.region.width / 7) 
@@ -333,6 +308,51 @@ def printText(context, parent):
 class WM_OT_warning(Operator):
     bl_idname = 'wm.warning'
     bl_label = "WARNING"
+
+    bl_options = {"INTERNAL"}
+
+    def checkRule(self):
+        #self.allowExec = False
+        global warningMessage
+        global actions
+        #global treeSelf
+        #treeSelf = self
+        
+        rules = {'system1': [5,5,4],
+                'system2': [5,5,4],
+                'system3': [4,4,3],
+                'system4': [7,7,5],
+                'system5': [8,7,5],
+                'system6': [6,6,6],
+                'system7': [8,8,7],
+                'system8': [8,8,6]}
+        genRules = rules[actions['system']]
+        ruleIndex = list(rules.keys()).index(actions['system']) + 1
+        warning = '''System {} will process the tree generation really slowly after the {}th generation. Therefore, it is possible that Blender stall for a long time based on your device specification.'''
+        if actions['flat']:
+            if actions['gen'] > genRules[0]:
+                warningMessage =  warning.format(str(ruleIndex), str(genRules[0]))
+                #return bpy.ops.wm.warning("INVOKE_DEFAULT")
+                return True
+            else:
+                return False
+        
+        else:
+            if actions['random']:
+                if actions['gen'] > genRules[1]:
+                    warningMessage = warning.format(str(ruleIndex), str(genRules[1]))
+                    #return bpy.ops.wm.warning("INVOKE_DEFAULT")
+                    return True
+                else:
+                    return False
+            else:
+                if actions['gen'] > genRules[2]:
+                    warningMessage = warning.format(str(ruleIndex), str(genRules[2]))
+                    #return bpy.ops.wm.warning("INVOKE_DEFAULT")
+                    return True
+                else:
+                    return False
+
     def draw(self, context):
         layout = self.layout
         box = layout.box()
@@ -341,17 +361,30 @@ class WM_OT_warning(Operator):
     def execute(self, context):
         #global treeSelf
         #treeSelf.allowExec = True
+        global actions
+        initiateLSystem()
+        actions = {}
         return {"FINISHED"}
     def cancel(self, context):
 
-        #global treeSelf
-        #treeSelf.genNum -=1
-        #treeSelf.allowExec = True
+        global treeSelf
+        treeSelf.genNum -= 1
+        
+        global actions
+        actions['gen'] -= 1
+        initiateLSystem()
+        actions = {}
         return None
     def invoke(self,context,event):
+        global actions
+        if self.checkRule():
+            print(True)
+            return context.window_manager.invoke_props_dialog(self)
+        else:
+            print(False)
+            return self.execute(context)
 
-        return context.window_manager.invoke_props_dialog(self)
-
+            
 def add_object_button(self, context):
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
