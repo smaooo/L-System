@@ -323,7 +323,6 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
 def printText(context, parent):
     global warningMessage
-    chars = int(context.region.width / 7) 
     wrapper = textwrap.wrap(text = warningMessage, width = context.region.width / 6)
     #lines = wrapper.wrap(text=warningMessage)
     for line in wrapper:
@@ -339,15 +338,9 @@ class WM_OT_warning(Operator):
         printText(context, box)
         
     def execute(self, context):
-        #global treeSelf
-        #treeSelf.allowExec = True
+    
         return {"FINISHED"}
-    def cancel(self, context):
-
-        #global treeSelf
-        #treeSelf.genNum -=1
-        #treeSelf.allowExec = True
-        return None
+    
     def invoke(self,context,event):
 
         return context.window_manager.invoke_props_dialog(self)
@@ -371,13 +364,11 @@ def register():
     bpy.utils.register_class(OBJECT_OT_add_object)  
     bpy.utils.register_class(WM_OT_warning)
     bpy.types.VIEW3D_MT_add.append(add_object_button)
-    #LSystem.register()
 
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_add_object)
     bpy.utils.unregister_class(WM_OT_warning)
     bpy.types.VIEW3D_MT_mesh_add.remove(add_object_button)
 
-    #LSystem.unregister()
 if __name__ == "__main__":
     register()
