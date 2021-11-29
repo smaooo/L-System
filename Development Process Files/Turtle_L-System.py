@@ -60,13 +60,19 @@ def applyRules(character):
     #return newstr
   
     
-      
+    stoRules = []
+    for i in range(33):
+      stoRules.append('F[+X]F[-X]+X')
+      stoRules.append('F[-X]F[-X]+X')
+    for i in range(34):
+      stoRules.append('F[-X]F+X')
+
     newstr = ''
     if character == 'F':
       newstr = 'FF'  
       #newstr = 'F[+FL]F[-FL]F'
     elif character == 'X':
-      newstr = 'F-[[X]+X]+F[+FX]-X'
+      newstr = choice(stoRules)
     else:
       newstr = character
     return newstr
@@ -122,15 +128,15 @@ def drawLsystem(t, word, angle, distance):
       
 def main():
   
-  word = createSystem(4, 'X')
+  word = createSystem(5, 'X')
   print(word)
   
   angle = 22.5
 
-  distance = 10
+  distance = 7
   turtle.hideturtle()
   t = turtle
-  wn = turtle.Screen()
+  wn = t.Screen()
   t.begin_fill()
  
   t.width(1)
@@ -138,7 +144,7 @@ def main():
   #t.clear()
   #t.up()
   t.pu()
-  wn.screensize(1280,720)
+  wn.screensize(500,720)
   wn.setup(width=1.0,height=1.0,startx=None, starty=None)
   #t.screensize(1280,720)
   t.goto(0,-t.screensize()[1]/2)

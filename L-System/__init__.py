@@ -14,7 +14,7 @@ bl_info = {
     "location": "View3D > Add",
     "description": "Creates a tree based on L-System",
     "warning": "",
-    "doc_url": "",
+    "doc_url": "https://github.com/smaooo/L-System/blob/main/README.md",
     "category": "Add Mesh",
 }
 
@@ -31,6 +31,7 @@ system = None
 warningMessage = ''
 #treeSelf = None
 
+# Call LSystem module
 def initiateLSystem(self, context):
     global system
     system = LSystem.LSystem(self.rule, self.genNum, self.size, self.style,
@@ -38,9 +39,10 @@ def initiateLSystem(self, context):
                             self.showShape, self.showLeaf, self.leafCount, self.randomRotation,
                             self.flat)
 
-
+# Update Variables after the system change
 def updateVariables(self,context):
-   
+    
+    # Defined variables for each system
     ruleDet = {'system1': {'angle': 25.7, 'thickness': 0.6, 'leafSize': 0.6, 'leafCount': 5},
                 'system2': {'angle': 20, 'thickness': 0.4, 'leafSize': 0.35, 'leafCount': 5},
                 'system3': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.3, 'leafCount': 200},
@@ -49,6 +51,8 @@ def updateVariables(self,context):
                 'system6': {'angle': 22.5, 'thickness': 0.7, 'leafSize': 0.43, 'leafCount': 3},
                 'system7': {'angle': 22.5, 'thickness': 0.1, 'leafSize': 0.15, 'leafCount': 2},
                 'system8': {'angle': 22.5, 'thickness': 0.5, 'leafSize': 0.26, 'leafCount': 5}}
+    
+    # Updates
     self.angle = ruleDet[self.rule]['angle']
     self.thickness = ruleDet[self.rule]['thickness']
     self.leafSize = ruleDet[self.rule]['leafSize']
@@ -58,6 +62,8 @@ def updateVariables(self,context):
     self.showShape = False
     self.showLeaf = False
     self.genNum = 3
+
+# Change random rotation option based on the 2D/3D context
 def changeRotation(self, context):
     if self.flat:
         self.randomRotation = False
@@ -65,6 +71,7 @@ def changeRotation(self, context):
     else:
         self.randomRotation = True
 
+# Update draw length based on the random rotation option
 def updateLen(self, context):
 
     if self.randomRotation:
@@ -72,25 +79,18 @@ def updateLen(self, context):
     else: 
         self.size = 0.25
 
-def setToFalse(self, context):
-    if self.exeSto:
-        self.exeSto = False
-
-
+# UI Panel
 class OBJECT_OT_add_object(Operator, AddObjectHelper):
     
-        
     """Create a new Tree"""
     bl_idname = "mesh.add_tree"
     bl_label = "Create Tree"
     bl_options = {'REGISTER', 'UNDO'}
 
-    
+    # Check rule and give warning to the user
     def checkRule(self, context):
-        #self.allowExec = False
         global warningMessage
-        #global treeSelf
-        #treeSelf = self
+
         rules = {'system1': [5,5,4],
                 'system2': [5,5,4],
                 'system3': [4,4,3],
@@ -99,30 +99,31 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
                 'system6': [6,6,6],
                 'system7': [8,8,7],
                 'system8': [8,8,6]}
+
         genRules = rules[self.rule]
         ruleIndex = list(rules.keys()).index(self.rule) + 1
+
+        # Produce warning message
         warning = '''System {} will process the tree generation really slowly after the {}th generation. Therefore, it is possible that Blender stall for a long time based on your device specification.'''
+        
+        # Check states
         if self.flat:
             if self.genNum > genRules[0]:
                 warningMessage =  warning.format(str(ruleIndex), str(genRules[0]))
                 return bpy.ops.wm.warning("INVOKE_DEFAULT")
-            #else:
-            #    self.allowExec = True
-        
+    
         else:
             if self.randomRotation:
                 if self.genNum > genRules[1]:
                     warningMessage = warning.format(str(ruleIndex), str(genRules[1]))
                     return bpy.ops.wm.warning("INVOKE_DEFAULT")
-                #else:
-                #    self.allowExec = True
+          
             else:
                 if self.genNum > genRules[2]:
                     warningMessage = warning.format(str(ruleIndex), str(genRules[2]))
                     return bpy.ops.wm.warning("INVOKE_DEFAULT")
-                #else:
-                #    self.allowExec = True
 
+    """ADD ICONS""" 
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = []
@@ -140,15 +141,6 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     tmpPath = join(installationPath, 'Materials\Icon.png')
     pcoll.load("tree_icon", tmpPath, 'IMAGE')
 
-    ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
-                ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
-                ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
-                ('system4', 'System 4', 'System 4',pcoll['System4'].icon_id, 4),
-                ('system5', 'System 5', 'System 5',pcoll['System5'].icon_id, 5),
-                ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
-                ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
-                ('system8', 'System 8', 'System 8',pcoll['System8'].icon_id, 8)]
-
     
     iconPath = []
     for i in range(1,3):
@@ -163,9 +155,20 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
     tmpPath = join(installationPath, 'Materials\DDD.png')
     pcoll.load("DDD", tmpPath, 'IMAGE')
 
+    """CLASS ATTRIBUTES"""
+    ruleItems = [('system1', 'System 1', "System 1", pcoll['System1'].icon_id, 1),
+                ('system2', 'System 2', 'System 2',pcoll['System2'].icon_id, 2),
+                ('system3', 'System 3', 'System 3',pcoll['System3'].icon_id, 3),
+                ('system4', 'System 4', 'System 4',pcoll['System4'].icon_id, 4),
+                ('system5', 'System 5', 'System 5',pcoll['System5'].icon_id, 5),
+                ('system6', 'System 6', 'System 6',pcoll['System6'].icon_id, 6),
+                ('system7', 'System 7', 'System 7',pcoll['System7'].icon_id, 7),
+                ('system8', 'System 8', 'System 8',pcoll['System8'].icon_id, 8)]
+
     styles = [('STYLE1', 'Jagged', 'Jagged Mesh', pcoll['Style1'].icon_id, 1),
             ('STYLE2', 'Smooth', 'Smooth and organic', pcoll['Style2'].icon_id, 2)]
 
+    
     rule: prop.EnumProperty(
         items = ruleItems,
         name = 'System', update = updateVariables
@@ -269,7 +272,10 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         description = 'Regenrate stochastic system',
         default = False
     )
+
+    # UI Panel draw Function
     def draw(self, context):
+
         layout = self.layout
         layout.use_property_split = True
         box = layout.box()
@@ -279,13 +285,9 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         box.prop(self, 'rule')
         if self.flat:
             box.prop(self, 'flat', icon_value = self.pcoll['DDD'].icon_id, invert_checkbox = True)
-            
         else:
             box.prop(self, 'flat', icon_value = self.pcoll['DD'].icon_id)
-            
-        
         box.prop(self, 'genNum')
-     
         box.prop (self, 'angle')
         if self.flat == False:
             box.prop(self, 'randomRotation')
@@ -313,6 +315,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
             row = layout.row(align=True)
             row.prop(self, 'generate', icon = 'MOD_REMESH', expand = True)
 
+    # Execute LSYSTEMS after changes in panel
     def execute(self, context):  
 
         if self.realTime or self.generate or self.regenerate:
@@ -322,6 +325,7 @@ class OBJECT_OT_add_object(Operator, AddObjectHelper):
         
         return {"FINISHED"}
     
+# Add warning message to pop-up panel
 def printText(context, parent):
     global warningMessage
     wrapper = textwrap.wrap(text = warningMessage, width = context.region.width / 6)
@@ -329,10 +333,12 @@ def printText(context, parent):
     for line in wrapper:
         parent.label(text = line)
 
-
+# Warning message pop-up class
 class WM_OT_warning(Operator):
     bl_idname = 'wm.warning'
     bl_label = "WARNING"
+
+    # Draw warning panel
     def draw(self, context):
         layout = self.layout
         box = layout.box()
@@ -346,20 +352,21 @@ class WM_OT_warning(Operator):
 
         return context.window_manager.invoke_props_dialog(self)
 
+# Add Tree button to the add menu
 def add_object_button(self, context):
+    # Add Icon
     pcoll = bpy.utils.previews.new()
     installationPath = dirname(abspath(__file__))
     iconPath = join(installationPath, 'Materials\Icon.png')
     pcoll.load("tree_icon", iconPath, 'IMAGE')
     icon = pcoll['tree_icon']
-    
+    # Add button operator
     self.layout.operator(
         OBJECT_OT_add_object.bl_idname,
         text="Tree",
         icon_value = icon.icon_id)
     
 
-preview_collections = {}
 def register():
     
     bpy.utils.register_class(OBJECT_OT_add_object)  
