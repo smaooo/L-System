@@ -11,11 +11,11 @@ For installing this add-on inside Blender download the [L-System.zip](https://gi
 
 1. Select the Edit menu from the top toolbar and then select Preferences from the menu.
 
-   ![Screenshot (53)](D:\Math\L-System\L-System\imgs\Screenshot (53).png)
+   ![Screenshot (53)](.\imgs\Screenshot (53).png)
 
 2. In the Blender Preference select the Add-ons section from the left sidebar. 
 
-   ![Screenshot (54)](D:\Math\L-System\L-System\imgs\Screenshot (54).png)
+   ![Screenshot (54)](.\imgs\Screenshot (54).png)
 
 3. Select the In![Screenshot (56)](D:\Math\L-System\L-System\imgs\Screenshot (56).png)stall... from top the Preferences.
 
