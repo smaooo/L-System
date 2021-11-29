@@ -69,6 +69,10 @@ For installing this add-on inside Blender download the [L-System.zip](https://gi
 
 
 
+## Tip
+
+- If you accidentally clicked on the screen or on the panel and the panel closed, you can open up the panel again using **F9**.
+
 ## Examples
 
 ### 	2D Generated Trees
