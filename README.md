@@ -1,5 +1,5 @@
 # L-System Tree Generator Blender Add-On
-L-System Tree Generator is an add-on that produces different types of trees based-on the given 
+L-System Tree Generator is an add-on that produces different types of trees based on the given 
 
 [L-System](https://en.wikipedia.org/wiki/L-system) (which is limited to only 8 systems in this version). This add-on gives you the ability to generate different tree forms from a single system using different variables and drivers.
 
