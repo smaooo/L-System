@@ -35,6 +35,8 @@ For installing this add-on inside Blender download the [L-System.zip](https://gi
 
 ## How to use!
 
+[Video](https://player.vimeo.com/video/651083043?h=ed654d4c15&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479)
+
 - For generating a tree, you have to press on the "Generate" button.
 
   ![image-20211129031109113](https://github.com/smaooo/L-System/blob/main/imgs/image-20211129031109113.png)
