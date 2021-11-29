@@ -11,7 +11,7 @@ For installing this add-on inside Blender download the [L-System.zip](https://gi
 
 1. Select the Edit menu from the top toolbar and then select Preferences from the menu.
 
-   ![Screenshot (53)](imgs/Screenshot (53).png)
+   ![alt text](https://github.com/smaooo/L-System/blob/main/imgs/Screenshot%20(53).png)
 
 2. In the Blender Preference select the Add-ons section from the left sidebar. 
 
